@@ -10,7 +10,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'TDS 图形组',
+  title: 'TDS Graphics',
   tagline: '兴趣的力量',
   favicon: 'img/logo_pixel.png',
 
