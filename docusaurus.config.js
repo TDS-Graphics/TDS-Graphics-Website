@@ -47,6 +47,12 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
+          // Exclude submodule directories that contain files with special characters
+          // in their names (e.g. brackets in bibliography filenames) that would
+          // cause slug generation errors. These files are not referenced in the sidebar.
+          exclude: [
+            'reading-resources/Real-Time-Rendering-4th-Bibliography-Collection/**/*.md',
+          ],
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:

@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Check if a document file actually exists (submodule content may be absent).
- * @param {string} docPath - Relative path from docs/ dir (e.g. 'introduction/README')
+ * @param {string} docPath - Relative path from docs/ dir WITHOUT .md extension (e.g. 'introduction/README')
  * @returns {boolean}
  */
 function docExists(docPath) {
@@ -25,8 +25,8 @@ function docExists(docPath) {
  *
  * @param {object} options
  * @param {string} options.label
- * @param {string} options.linkDoc
- * @param {string[]} options.items
+ * @param {string} options.linkDoc - Doc id WITHOUT .md extension
+ * @param {string[]} options.items - Array of doc ids WITHOUT .md extension
  * @param {string} [options.indexTitle]
  * @param {string} [options.indexDescription]
  * @param {string} [options.indexSlug]
