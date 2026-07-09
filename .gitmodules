@@ -1,0 +1,9 @@
+[submodule "docs/reading-resources"]
+	path = docs/reading-resources
+	url = https://github.com/TDS-Graphics/reading-resources.git
+[submodule "docs/introduction"]
+	path = docs/introduction
+	url = https://github.com/TDS-Graphics/.github.git
+[submodule "docs/unified-roadmap"]
+	path = docs/unified-roadmap
+	url = https://github.com/TDS-Graphics/unified-roadmap.git
