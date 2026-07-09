@@ -111,7 +111,7 @@ const config = {
             items: [
               {
                 label: '教程',
-                to: '/docs/introduction',
+                to: '/docs/intro',
               },
             ],
           },
