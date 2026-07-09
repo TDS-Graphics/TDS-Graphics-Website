@@ -1,25 +1,17 @@
-yangshun:
-  name: Yangshun Tay
-  title: Ex-Meta Staff Engineer, Co-founder GreatFrontEnd
-  url: https://linkedin.com/in/yangshun
-  image_url: https://github.com/yangshun.png
+BlueMicro233:
+  name: 布朗尼蛋糕
+  title: TDS-G 社长
+  url: https://github.com/BlueMicro233
+  image_url: https://avatars.githubusercontent.com/u/91715384
   page: true
   socials:
-    x: yangshunz
-    linkedin: yangshun
-    github: yangshun
-    newsletter: https://www.greatfrontend.com
+    github: BlueMicro233
 
-slorber:
-  name: Sébastien Lorber
-  title: Docusaurus maintainer
-  url: https://sebastienlorber.com
-  image_url: https://github.com/slorber.png
-  page:
-    # customize the url of the author page at /blog/authors/<permalink>
-    permalink: '/all-sebastien-lorber-articles'
+HH45137:
+  name: SHADER
+  title: 网站维护者
+  url: https://github.com/HH45137
+  image_url: https://avatars.githubusercontent.com/u/52552476
+  page: true
   socials:
-    x: sebastienlorber
-    linkedin: sebastienlorber
-    github: slorber
-    newsletter: https://thisweekinreact.com
+    github: HH45137
