@@ -95,7 +95,7 @@ const config = {
             position: 'left',
             label: '教程',
           },
-          {to: '/blog', label: '文档', position: 'left'},
+          {to: '/blog', label: 'blog', position: 'left'},
           {
             href: 'https://github.com/TDS-Graphics',
             label: 'GitHub',
@@ -132,7 +132,7 @@ const config = {
             title: '更多',
             items: [
               {
-                label: '文档',
+                label: 'blog',
                 to: '/blog',
               },
               {
