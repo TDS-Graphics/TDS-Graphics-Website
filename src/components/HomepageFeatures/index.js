@@ -15,13 +15,7 @@ const FeatureList = [
     Svg: require('@site/static/img/television-svgrepo-com.svg').default,
     description: '走进实时渲染管线，掌握每一帧画面背后的核心过程。',
     accent: 'yellow',
-  },
-  {
-    title: '并行计算',
-    Svg: require('@site/static/img/numpy-svgrepo-com.svg').default,
-    description: 'CUDA 非常粗大',
-    accent: 'coral',
-  },
+  }
 ];
 
 function Feature({Svg, title, description, accent}) {
