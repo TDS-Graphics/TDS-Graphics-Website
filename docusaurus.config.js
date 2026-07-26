@@ -25,7 +25,7 @@ const mathRehypePlugins = [
 const config = {
   title: 'TDS Graphics',
   tagline: '兴趣的力量',
-  favicon: 'img/logo_pixel.png',
+  favicon: 'img/logo.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -105,7 +105,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      image: 'img/logo_pixel.png',
+      image: 'img/logo.png',
       colorMode: {
         respectPrefersColorScheme: true,
       },
@@ -113,7 +113,7 @@ const config = {
         title: 'TDS Graphics',
         logo: {
           alt: 'TDS Graphics Logo',
-          src: 'img/logo_pixel.png',
+          src: 'img/logo.png',
         },
         items: [
           {

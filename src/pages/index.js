@@ -11,7 +11,7 @@ function HomepageHeader() {
       <div className={`container ${styles.heroInner}`}>
         <img
           className={styles.heroLogo}
-          src="img/logo_pixel.png"
+          src="img/logo.png"
           alt="TDS Graphics"
         />
         {/* <p className={styles.eyebrow}>TDS GRAPHICS · COMPUTER GRAPHICS</p> */}
