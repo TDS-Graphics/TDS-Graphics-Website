@@ -5,6 +5,19 @@
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
 import {themes as prismThemes} from 'prism-react-renderer';
+import rehypeKatex from 'rehype-katex';
+import remarkMath from 'remark-math';
+
+const mathRemarkPlugins = [remarkMath];
+const mathRehypePlugins = [
+  [
+    rehypeKatex,
+    {
+      throwOnError: false,
+      strict: 'warn',
+    },
+  ],
+];
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -19,16 +32,11 @@ const config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
-  // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
+  url: 'https://tds-graphics.github.io',
   baseUrl: '/TDS-Graphics-Website/',
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'TDS-Graphics',
+  projectName: 'TDS-Graphics-Website',
 
   onBrokenLinks: 'throw',
 
@@ -47,27 +55,23 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          // Exclude submodule directories that contain files with special characters
-          // in their names (e.g. brackets in bibliography filenames) that would
-          // cause slug generation errors. These files are not referenced in the sidebar.
-          exclude: [
-            'reading-resources/Real-Time-Rendering-4th-Bibliography-Collection/**/*.md',
-          ],
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
+          remarkPlugins: mathRemarkPlugins,
+          rehypePlugins: mathRehypePlugins,
+          showLastUpdateAuthor: true,
+          showLastUpdateTime: true,
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/TDS-Graphics/TDS-Graphics-Website/edit/main/',
         },
         blog: {
           showReadingTime: true,
+          remarkPlugins: mathRemarkPlugins,
+          rehypePlugins: mathRehypePlugins,
           feedOptions: {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/TDS-Graphics/TDS-Graphics-Website/edit/main/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -88,6 +92,12 @@ const config = {
         path: 'tutorials/unified-roadmap-course/docs',
         routeBasePath: 'tutorials',
         sidebarPath: './tutorialsSidebars.js',
+        remarkPlugins: mathRemarkPlugins,
+        rehypePlugins: mathRehypePlugins,
+        showLastUpdateAuthor: true,
+        showLastUpdateTime: true,
+        editUrl:
+          'https://github.com/TDS-Graphics/TDS-Graphics-Website/edit/main/',
       },
     ],
   ],
@@ -173,6 +183,16 @@ const config = {
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
+        additionalLanguages: [
+          'c',
+          'cpp',
+          'glsl',
+          'hlsl',
+          'wgsl',
+          'cmake',
+          'bash',
+          'python',
+        ],
       },
     }),
 };

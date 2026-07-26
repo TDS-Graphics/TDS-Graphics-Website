@@ -1,3 +1,7 @@
+---
+  sidebar_position: 1
+  sidebar_label: 阶段 0
+---
 # 阶段 0
 
 > *“思维无内容则空，直观无概念则盲。”*

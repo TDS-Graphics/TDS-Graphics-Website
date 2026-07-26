@@ -1,3 +1,7 @@
+---
+  sidebar_position: 1
+  sidebar_label: 阶段 2
+---
 # 阶段 2
 
 我只需要弄清楚事情是如何运作的。——伊万·萨瑟兰
