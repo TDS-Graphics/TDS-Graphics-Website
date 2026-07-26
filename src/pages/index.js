@@ -1,27 +1,40 @@
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
-
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <Heading as="h1" className="hero__title">
-          {siteConfig.title}
-        </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
+    <header className={styles.heroBanner}>
+      <div className={`container ${styles.heroInner}`}>
+        <img
+          className={styles.heroLogo}
+          src="img/logo_pixel.png"
+          alt="TDS Graphics"
+        />
+        {/* <p className={styles.eyebrow}>TDS GRAPHICS · COMPUTER GRAPHICS</p> */}
+        <Heading as="h1" className={styles.heroTitle}>TDS Graphics</Heading>
+        {/* <p className={styles.heroSubtitle}>
+
+        </p> */}
+        <div className={styles.heroActions}>
           <Link
-            className="button button--secondary button--lg"
+            className={`button button--primary button--lg ${styles.primaryAction}`}
             to="/docs/intro">
-            进入计算机图形学的世界
+            浏览文档
           </Link>
+          <Link
+            className={`button button--outline button--secondary button--lg ${styles.secondaryAction}`}
+            to="/tutorials/">
+            开始教程
+          </Link>
+        </div>
+        <div className={styles.heroMeta} aria-label="站点内容概览">
+          <span>系统路线</span>
+          <span>阶段任务</span>
+          <span>图形实践</span>
         </div>
       </div>
     </header>
@@ -33,7 +46,7 @@ export default function Home() {
   return (
     <Layout
       title={`${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      description="TDS Graphics 计算机图形学文档、教程与实践记录">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

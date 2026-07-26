@@ -1,3 +1,5 @@
+@import 'katex/dist/katex.min.css';
+
 /**
  * Any CSS included here will be global. The classic template
  * bundles Infima by default. Infima is a CSS framework designed to
@@ -6,25 +8,31 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #99CCFF;
-  --ifm-color-primary-dark: #99CC33;
-  --ifm-color-primary-darker: #CCCCCC;
-  --ifm-color-primary-darkest: #000000;
-  --ifm-color-primary-light: #FFFFCC;
-  --ifm-color-primary-lighter: #CCFFFF;
-  --ifm-color-primary-lightest: #FFCCCC;
+  --ifm-color-primary: #287d7a;
+  --ifm-color-primary-dark: #246f6d;
+  --ifm-color-primary-darker: #226967;
+  --ifm-color-primary-darkest: #1c5755;
+  --ifm-color-primary-light: #2c8b87;
+  --ifm-color-primary-lighter: #2e918e;
+  --ifm-color-primary-lightest: #35a39f;
+  --ifm-heading-font-weight: 720;
+  --ifm-font-family-base: Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #99CCFF;
-  --ifm-color-primary-dark: #99CC33;
-  --ifm-color-primary-darker: #CCCCCC;
-  --ifm-color-primary-darkest: #000000;
-  --ifm-color-primary-light: #FFFFCC;
-  --ifm-color-primary-lighter: #CCFFFF;
-  --ifm-color-primary-lightest: #FFCCCC;
+  --ifm-color-primary: #6fd1cc;
+  --ifm-color-primary-dark: #55c8c2;
+  --ifm-color-primary-darker: #48c3bd;
+  --ifm-color-primary-darkest: #37a29d;
+  --ifm-color-primary-light: #89dad6;
+  --ifm-color-primary-lighter: #96deda;
+  --ifm-color-primary-lightest: #bcebea;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+.navbar {
+  box-shadow: 0 1px 0 var(--ifm-color-emphasis-200);
 }

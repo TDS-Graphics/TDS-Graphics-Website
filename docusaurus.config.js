@@ -80,11 +80,22 @@ const config = {
     ],
   ],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'tutorials',
+        path: 'tutorials/unified-roadmap-course/docs',
+        routeBasePath: 'tutorials',
+        sidebarPath: './tutorialsSidebars.js',
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/logo_pixel.png',
       colorMode: {
         respectPrefersColorScheme: true,
       },
@@ -99,9 +110,14 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
+            label: '文档',
+          },
+          {
+            to: '/tutorials/',
+            position: 'left',
             label: '教程',
           },
-          {to: '/blog', label: 'blog', position: 'left'},
+          {to: '/blog', label: '博客', position: 'right'},
           {
             href: 'https://github.com/TDS-Graphics',
             label: 'GitHub',
@@ -116,8 +132,12 @@ const config = {
             title: '文档',
             items: [
               {
-                label: '教程',
+                label: '整体文档',
                 to: '/docs/intro',
+              },
+              {
+                label: '学习教程',
+                to: '/tutorials/',
               },
             ],
           },
@@ -138,7 +158,7 @@ const config = {
             title: '更多',
             items: [
               {
-                label: 'blog',
+                label: '博客',
                 to: '/blog',
               },
               {

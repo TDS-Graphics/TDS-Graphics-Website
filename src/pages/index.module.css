@@ -4,20 +4,154 @@
  */
 
 .heroBanner {
-  padding: 4rem 0;
-  text-align: center;
   position: relative;
   overflow: hidden;
+  min-height: min(720px, calc(100vh - var(--ifm-navbar-height)));
+  display: flex;
+  align-items: center;
+  color: #f7fafc;
+  background: #09121b url('/img/sponza.jpg') center 42% / cover;
+  image-rendering: pixelated;
+}
+
+.heroBanner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 14, 21, 0.78);
+}
+
+.heroBanner::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: #48a9a6;
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+  padding-top: 5.5rem;
+  padding-bottom: 4.5rem;
+}
+
+.heroLogo {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #6fd1cc;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.heroTitle {
+  margin: 0;
+  max-width: 760px;
+  color: #fff;
+  font-size: 4.4rem;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.heroSubtitle {
+  max-width: 660px;
+  margin: 1.5rem 0 0;
+  color: #c6d0d8;
+  font-size: 1.22rem;
+  line-height: 1.8;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 2.25rem;
+}
+
+.primaryAction {
+  border-color: #48a9a6;
+  background: #48a9a6;
+  color: #07191a;
+}
+
+.primaryAction:hover {
+  border-color: #69c3bf;
+  background: #69c3bf;
+  color: #07191a;
+}
+
+.secondaryAction {
+  border-color: #77838c;
+  color: #f7fafc;
+}
+
+.secondaryAction:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+.heroMeta {
+  display: flex;
+  gap: 1.75rem;
+  margin-top: 4rem;
+  color: #98a6b1;
+  font-size: 0.86rem;
+}
+
+.heroMeta span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.55rem;
+  vertical-align: 0.08rem;
+  background: #f2c14e;
 }
 
 @media screen and (max-width: 996px) {
   .heroBanner {
-    padding: 2rem;
+    min-height: auto;
+  }
+
+  .heroInner {
+    padding-top: 4rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .heroTitle {
+    font-size: 3rem;
   }
 }
 
-.buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+@media screen and (max-width: 560px) {
+  .heroTitle {
+    font-size: 2.55rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.05rem;
+  }
+
+  .heroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heroActions a {
+    width: 100%;
+  }
+
+  .heroMeta {
+    gap: 0.65rem 1.2rem;
+    flex-wrap: wrap;
+    margin-top: 2.75rem;
+  }
 }
