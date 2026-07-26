@@ -1,5 +1,6 @@
 ---
 slug: /
+sidebar_position: 1
 sidebar_label: 图形组组内的学习方案
 title: 图形组组内的学习方案
 ---
