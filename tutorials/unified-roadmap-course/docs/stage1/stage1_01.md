@@ -271,12 +271,16 @@ $$
 
 写成数学公式就是：
 
-$$\mathbf{C}_{i,j} = \sum_{k=1}^{m} \mathbf{A}_{i,k} \cdot \mathbf{B}_{k,j}$$
+$$
+\mathbf{C}_{i,j} = \sum_{k=1}^{m} \mathbf{A}_{i,k} \cdot \mathbf{B}_{k,j}
+$$
 
 我们还拿矩阵 $\mathbf{A}$ 自己乘自己来试试：
 
 
-$$\mathbf{A} = \begin{bmatrix} 1 & \pi \\ 2 & 1 \end{bmatrix}$$
+$$
+\mathbf{A} = \begin{bmatrix} 1 & \pi \\ 2 & 1 \end{bmatrix}
+$$
 
 我们要计算 $\mathbf{C} = \mathbf{A} \times \mathbf{A}$：
 
@@ -288,7 +292,9 @@ $$\mathbf{A} = \begin{bmatrix} 1 & \pi \\ 2 & 1 \end{bmatrix}$$
 把它们拼起来：
 
 
-$$\mathbf{C} = \begin{bmatrix} 1+2\pi & 2\pi \\ 4 & 1+2\pi \end{bmatrix}$$
+$$
+\mathbf{C} = \begin{bmatrix} 1+2\pi & 2\pi \\ 4 & 1+2\pi \end{bmatrix}
+$$
 
 ### 矩阵乘法的性质
 1. $\mathbf{A}\mathbf{B} \neq \mathbf{B}\mathbf{A}$
@@ -306,7 +312,9 @@ $$\mathbf{C} = \begin{bmatrix} 1+2\pi & 2\pi \\ 4 & 1+2\pi \end{bmatrix}$$
 令人失望的在所有尺寸的矩阵下不存在一个统一的单位元，但是对于定义在同一个线性空间中的 $n \times n$ 的矩阵来说存在单位元。
 
 对于元素是 $3 \times 3$ 的矩阵的线性空间，我们定义单位元为
-$$ \mathbf{I} = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix} $$
+$$
+ \mathbf{I} = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix} 
+ $$
 
 对于尺寸更大的方阵来说也类似，就是从左上角，到右下角，都是1，其他都是0
 
@@ -316,11 +324,15 @@ $$
 $$
 读者可以自行验证，可以发现无论怎么乘都是 $\mathbf{A}$ 本身
 
-在实数中我们知道 当一个数乘以自己的逆的时候，结果等于 1
-$$ k \times k^{-1} = 1$$
+在实数中我们知道 当一个数乘以自己的逆的时候，结果等于 1  
+$$ 
+k \times k^{-1} = 1
+$$
 
 而在矩阵中，我们同样这么定义
-$$ \mathbf{A} \times \mathbf{A}^{-1} = \mathbf{A}^{-1} \times \mathbf{A} = \mathbf{I} $$
+$$ 
+\mathbf{A} \times \mathbf{A}^{-1} = \mathbf{A}^{-1} \times \mathbf{A} = \mathbf{I} 
+$$
 
 由于我们的逆是定义在单位元下的，所以同样只有方形矩阵才有逆
 
