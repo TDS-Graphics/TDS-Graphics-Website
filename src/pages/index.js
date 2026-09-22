@@ -1,4 +1,5 @@
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
@@ -8,17 +9,25 @@ import styles from './index.module.css';
 function HomepageHeader() {
   return (
     <header className={styles.heroBanner}>
+      <img
+        className={styles.heroBg}
+        src={useBaseUrl('/img/sponza.jpg')}
+        alt=""
+        aria-hidden="true"
+        loading="eager"
+        fetchPriority="high"
+      />
       <div className={`container ${styles.heroInner}`}>
         <img
           className={styles.heroLogo}
-          src="img/logo.png"
+          src={useBaseUrl('/img/logo.png')}
           alt="TDS Graphics"
         />
-        {/* <p className={styles.eyebrow}>TDS GRAPHICS · COMPUTER GRAPHICS</p> */}
+        <p className={styles.eyebrow}>TDS 游戏开发协会 · 图形组</p>
         <Heading as="h1" className={styles.heroTitle}>TDS Graphics</Heading>
-        {/* <p className={styles.heroSubtitle}>
-
-        </p> */}
+        <p className={styles.heroSubtitle}>
+          探究支撑游戏世界的原理，并亲手把它们实现出来。
+        </p>
         <div className={styles.heroActions}>
           <Link
             className={`button button--primary button--lg ${styles.primaryAction}`}
