@@ -7,7 +7,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: min(720px, calc(100vh - var(--ifm-navbar-height)));
+  min-height: min(760px, calc(100vh - var(--ifm-navbar-height)));
   display: flex;
   align-items: center;
   color: #f7fafc;
@@ -48,8 +48,8 @@
 .heroInner {
   position: relative;
   z-index: 2;
-  padding-top: 5.5rem;
-  padding-bottom: 4.5rem;
+  padding-top: 6rem;
+  padding-bottom: 5rem;
 }
 
 .heroLogo {
