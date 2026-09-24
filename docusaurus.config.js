@@ -175,10 +175,18 @@ const config = {
                 label: 'GitHub',
                 href: 'https://github.com/TDS-Graphics',
               },
+              {
+                label: '许可证说明',
+                to: '/license',
+              },
+              {
+                label: '内容许可（CC BY-NC-ND 4.0）',
+                href: 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hans/',
+              },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} 全部共享`,
+        copyright: `Copyright © ${new Date().getFullYear()} TDS Graphics · 源代码 MIT · 内容 CC BY-NC-ND 4.0`,
       },
       prism: {
         theme: prismThemes.github,
