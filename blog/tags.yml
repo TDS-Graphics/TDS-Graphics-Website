@@ -8,6 +8,11 @@ unkonwn:
   permalink: /unkonwn
   description: unidentified posts
 
+cg:
+  label: cg
+  permalink: /cg
+  description: computer graphics posts
+
 docusaurus:
   label: Docusaurus
   permalink: /docusaurus
