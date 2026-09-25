@@ -1,6 +1,6 @@
 BlueMicro233:
   name: 布朗尼蛋糕
-  title: TDS-G 社长
+  title: TDSG 组长
   url: https://github.com/BlueMicro233
   image_url: https://avatars.githubusercontent.com/u/91715384
   page: true
@@ -9,9 +9,36 @@ BlueMicro233:
 
 HH45137:
   name: SHADER
-  title: 网站维护者
+  title: TDSG 核心成员
   url: https://github.com/HH45137
   image_url: https://avatars.githubusercontent.com/u/52552476
   page: true
   socials:
     github: HH45137
+
+Artichoke:
+  name: Artichoke
+  title: TDSG 核心成员
+  url: https://github.com/Yang-Junjie
+  image_url: https://avatars.githubusercontent.com/u/52557527
+  page: true
+  socials:
+    github: Artichoke
+
+Opoi:
+  name: Opoi
+  title: TDSG 核心成员
+  url: https://github.com/opoi375
+  image_url: https://avatars.githubusercontent.com/u/200934245
+  page: true
+  socials:
+    github: Opoi
+
+KevKev:
+  name: KevKev
+  title: TDSG 核心成员
+  url: https://github.com/SourceDevKev
+  image_url: https://avatars.githubusercontent.com/u/40680747
+  page: true
+  socials:
+    github: KevKev

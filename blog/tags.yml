@@ -3,10 +3,10 @@ facebook:
   permalink: /facebook
   description: Facebook tag description
 
-hello:
-  label: Hello
-  permalink: /hello
-  description: Hello tag description
+unkonwn:
+  label: Unkonwn
+  permalink: /unkonwn
+  description: unidentified posts
 
 docusaurus:
   label: Docusaurus
