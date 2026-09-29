@@ -1,0 +1,128 @@
+---
+title: Reading Global Illumination using Photon Maps
+authors: [Artichoke]
+tags: [cg]
+date: 2026-09-29T14:07
+---
+
+# Introduction
+
+![Figure 1](../assets/2026-09-29-PhotonMapping/pm.png)
+
+Photon Mapping 是由 Henrik Wann Jensen 于 1996 年提出的一种全局光照方法，它高效解决了 Caustics 这一在经典 Path Tracing 中难以收敛的问题。
+
+Photon Mapping 是一个 two pass 的方法，在 Pass 1 中首先通过场景的光源向场景中发射大量 Photon 并且当这些 Photon 击中物体表面时在该物体的表面使用 两张 photon Map 存储这些 Photon 的信息，一张高分辨率的 Map 用于渲染 Caustics，一张低分辨率的 Map 用于给 Pass 2 提供信息。
+
+在 Pass 2 中，使用传统的 Monte Carlo Path Tracing 但对于不同材质使用不同的方案。
+
+# Photon Mapping 详细步骤
+## Pass 1: Constructing the Photon Map
+Photon Map 是通过从场景的光源中发射大量光子构建的。每个 Photon 都使用类似 Path Tracing 的方法在场景中追踪，Photon 每次击中物体表面时，都会被存储在这个物体表面的 Poton Map 中，通过 Russian Roulette 策略来决定是否继续追踪，如果继续追踪则根据这个物体的 BRDF 采样得到下一个 Photon 的方向，并继续追踪。  
+
+我们需要两张 Photon Map：一张 Caustics Photon Map 和一张 Global Photon Map。  
+
+Caustics Photon Map 仅仅被用于存储与 Caustics 对应的 Photon。它的构建是这样的：从光源向场景中的 Specular 材质的物体发射经过反射，当它第一次击中场景中的 Diffuse 材质物体时，保存在这个 Diffuse 材质物体的表面。Caustics 是通过直接可视化的基于Caustics Photon Map 的 radiance 估计来渲染的，所以者需要大量的 Photon 来构建 Caustics Photon Map。
+
+Global Photon Map 被用于粗略的估计场景中的 Flux 。它通过光源向场景中所有的物体发射 Photon 来构建。它不是直接可以被可视化渲染的，换句话说，它需要结合 Pass 2 来使用。因此它不需要像 Caustics Photon Map 一样使用大量 Photon 来构建。在第一个交点存储普通 Photon，在后续的交点（即处于阴影中的区域）存储 Shadow Photon，这些 Shadow Photon 在 Pass 2 中可以用于减少 Shadow Ray 的数量。
+
+所有的 Photon 都被存储在 平衡 k-d Tree 中，在这个数据结构下，在包含 N 个光子的树中查找 M 个光子所花费的时间复杂度为 $O(M \cdot \log_{2}(N))$，并允许我们仅使用 20 bytes 表示每个光子。
+
+## Pass 2: Rendering
+在 Pass 2 中，我们使用传统的 Monte Carlo Path Tracing。我们知道渲染方程是：
+
+$$
+L_o(p, \omega_o) = L_e(p, \omega_o) + \int_{\Omega } f_r(p,\omega_i, \omega_o) L_i(p,\omega_i) (\mathbf{n}\cdot\omega_i)  d\omega_i
+$$
+
+将渲染方程直接拆成
+
+$$
+\begin{aligned} L_o(p, \omega_o) &= \int_{\Omega} f_r(p, \omega_i, \omega_o) L_{i,l}(p, \omega_i) (\mathbf{n} \cdot \omega_i) \, d\omega_i  & \\ 
+                                 &+ \int_{\Omega} f_{r,s}(p, \omega_i, \omega_o) \left( L_{i,c}(p, \omega_i) + L_{i,d}(p, \omega_i) \right) (\mathbf{n} \cdot \omega_i) \, d\omega_i \\ 
+                                 &+ \int_{\Omega} f_{r,d}(p, \omega_i, \omega_o) L_{i,c}(p, \omega_i) (\mathbf{n} \cdot \omega_i) \, d\omega_i  \\ 
+                                 &+ \int_{\Omega} f_{r,d}(p, \omega_i, \omega_o) L_{i,d}(p, \omega_i) (\mathbf{n} \cdot \omega_i) \, d\omega_i 
+\end{aligned}
+$$
+其中
+$$
+f_r = f_{r,s} + f_{r,d} \quad \text{and} \quad L_i = L_{i,l} + L_{i,c} + L_{i,d}
+$$
+
+其中 $L_{i,l}$ 是直接光照，$L_{i,d}$ 是间接光照，$L_{i,c}$ 是镜面反射 Caustics。 $f_{r,d}$漫反射部分表示从 Lambertian to slightly glossy，$f_{r,s}$镜面反射部分表示 highly glossy and 理想 specular 反射模型。 
+
+论文将方程拆成了 4 项，分别表示直接光照（Direct Illumination）、镜面反射/折射（Specular Reflection）、焦散（Caustics）、柔和间接光照（Soft Indirect Illumination）。下面我们仔细介绍每一项。
+
+### 1. Direct Illumination
+$$
+\int_{\Omega} f_r(p, \omega_i, \omega_o) L_{i,l}(p, \omega_i) (\mathbf{n} \cdot \omega_i) \, d\omega_i
+$$
+第一项表示：光源发出的光线直接照射到表面产生的 radiance。  
+
+论文利用 Global Photon Map 中的 Shadow Photons 进行加速。在计算表面点 $p$ 的直接光照时，先在 k-d Tree 中查找 $p$ 附近的近邻光子。如果附近光子全都是普通光子，说明该区域被完全照亮；如果全都是 Shadow Photons，说明该区域处于纯阴影中；只有当附近光子混杂有普通光子和阴影光子（处于阴影边界/半影区）时，才需要向光源发射 Shadow Ray 进行精确的可见性测试。这避开了大部分无意义的阴影采样。  
+
+如果该点是递归路径深层的表面，则不发射 Shadow Ray，直接提取 Global Photon Map 的估计值。
+
+### 2. Specular Reflection
+$$
+\int_{\Omega} f_{r,s}(p, \omega_i, \omega_o) \left( L_{i,c}(p, \omega_i) + L_{i,d}(p, \omega_i) \right) (\mathbf{n} \cdot \omega_i) \, d\omega_i
+$$
+第二项表示：经过理想镜面或者 Highly Glossy 表面反射/折射后看到的光照。
+
+由于理想镜面或者 Highly Glossy的 BRDF 项 $f_{r,s}$ 的能量集中在极小的 lobe 范围内，如果直接用 Photon Map 评估，需要海量的光子才能 Artifact 因此论文对该项采用标准的 Monte Carlo Path Tracing
+
+### 3. Caustics
+$$
+\int_{\Omega} f_{r,d}(p, \omega_i, \omega_o) L_{i,c}(p, \omega_i) (\mathbf{n} \cdot \omega_i) \, d\omega_i
+$$
+第三项表示：光线经 Specular 物体反射或折射后，照射到漫反射表面上产生的高光区域
+直接利用 Pass 1 中专门构建的 Caustics Photon Map 进行近邻查找和密度估计，直接可视化渲染出焦散
+
+### 4. Soft Indirect Illumination
+
+$$
+\int_{\Omega} f_{r,d}(p, \omega_i, \omega_o) L_{i,d}(p, \omega_i) (\mathbf{n} \cdot \omega_i) \, d\omega_i
+$$
+
+第四项表示：光线经过至少一次漫反射后，再由漫反射表面反射给相机的柔和间接光。
+
+当相机可以直接看到或者是近距离表面：使用蒙特卡洛采样向半球发射少量采样的间接光线。为了提高效率，结合了 Global Photon Map 提供的入射通量信息与 BRDF 共同生成优化后的重要性采样方向.  
+
+当递归深层或者远距离路径：当采样光线反弹多次，或者贡献权重很低时，截断递归光线，直接使用 Global Photon Map 提供的辐射度估计作为该项的解。这在保证低频间接光平滑无噪的同时，极大降低了蒙特卡洛光线追踪的路径爆炸。
+
+## Estimating Radiance using the Photon Map
+Photon Map 中的信息可以用于计算给定方向上离开物体表面的 Radiance，在 Pass 2 中我们需要使用 Photon Map 来进行估计 Radiance，核心在于如何从离散的 Photon Map 中重建出连续的辐射度 $L_o(p, \omega_o)$，而 Photon Map 并不直接存储 Radiance ，而是存储 Photon 的位置、入射方向和 Flux。为了在 Pass 2 的 Caustics 或 Indirect 计算中获取点 $p$ 处的 Radiance $L_o(p, \omega_o)$，需要使用 密度估计（Density Estimation）。
+
+我们都知道
+
+$$
+L(p,\omega) =  \frac{d^2\Phi(p)}{d\omega dA\cos \theta} 
+$$
+
+带入反射方程得到，并根据原论文，有：
+
+$$L_o(p_{surf}, \omega_o) = \int_{\Omega} f_r(p_{surf}, \omega_{i}, \omega_o) \frac{d^2\Phi_i(p_{surf}, \omega_i)}{dA \, d\omega_i} \, d\omega_i \approx \sum_{p=1}^{N} f_r(p_{surf}, \omega_{i,p}, \omega_o) \frac{\Delta\Phi_p(p_{surf}, \omega_{i,p})}{\pi r^2}$$
+
+ 
+其中
+
+- **$L_o(p_{surf}, \omega_o)$**：表面点 $p_{surf}$ 沿出射方向 $\omega_o$ 的出射 Radiance
+- **$\omega_{i,p}$**：第 $p$ 个光子到达表面点 $p_{surf}$ 时的入射方向
+- **$\Delta\Phi_p(p_{surf}, \omega_{i,p})$**：第 $p$ 个光子所携带的Flux
+- **$\pi r^2$**：估算的表面微元面积 $\Delta A$。以 $p_{surf} $为中心展开一个包含这 $N$ 个光子的最小球体，球体半径为 $r$，论文将光子落在表面的投影区域近似为一个半径为 $r$ 的圆盘（面积即 $\pi r^2$）
+
+在光子密度过低的情况下，Radiance 估计可能会给出模糊的结果，为了补偿这种情况，论文引入了一个权重附加给每个 photon $p$ 到表面 $x$ 的距离 $d$,$d_p$ 表示第 $p$ 个光子到 $x$ 的距离。
+$$
+w_p = max(0,1-d_p/(kr))
+$$
+
+其中 $k$ 是一个过滤常数，控制滤波平滑程度的参数，在引入权重后 Radiance 估计表示为：
+$$
+L_o(p_{surf}, \omega_o) \approx \frac{\sum_{p=1}^{N} f_r(p_{surf}, \omega_{i,p}, \omega_o) \Delta\Phi_p(p_{surf}, \omega_{i,p}) w_p}{\left(1 - \frac{2}{3k}\right) \pi r^2}
+$$
+
+$\left(1 - \frac{2}{3k}\right)$ 是基于二维表面分布对锥形滤波进行归一化的系数
+
+后面会继续介绍具体的实现
+
+## References
+[Global Illumination using Photon Maps](https://graphics.stanford.edu/~henrik/papers/ewr7/egwr96.pdf) 
