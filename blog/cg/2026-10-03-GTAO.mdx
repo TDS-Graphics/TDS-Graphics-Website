@@ -52,9 +52,29 @@ $$
 
 $$
 \begin{aligned} L_o(\omega_o,p) &= \int_{\Omega} f_r(\omega_i, \omega_o, p) L_i(\omega_i, p) V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i   \\ 
-                                 &\approx \frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\int_{\Omega} \cos\theta_i \mathrm{d}\omega_i} \int_{\Omega} f_r(\omega_i, \omega_o, p) L_i(\omega_i, p) \cos\theta_i \mathrm{d}\omega_i   \\ 
+                                &\approx V_{\mathrm{mean}} \int_{\Omega} f_r(\omega_i, \omega_o, p) L_i(\omega_i, p) \cos\theta_i \mathrm{d}\omega_i   \\ 
+                                 &= \frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\int_{\Omega} \cos\theta_i \mathrm{d}\omega_i} \int_{\Omega} f_r(\omega_i, \omega_o, p) L_i(\omega_i, p) \cos\theta_i \mathrm{d}\omega_i   \\ 
                                  &= \frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\pi} \int_{\Omega} f_r(\omega_i, \omega_o, p) L_i(\omega_i, p) \cos\theta_i \mathrm{d}\omega_i   \\
 \end{aligned}
 $$
 
-这里很显而易见了，左侧的 $\frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\pi}$ 就是从单位半球顶部投影下去的**可视区域面积和总面积的比值**。如果要找一个 AO 控制因子，那么就没有比它更合适的了。
+这里很显而易见了，左侧的 $\frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\pi}$ 就是从单位半球顶部投影下去的**可视区域面积和总面积的比值**，也即半球空间内的 **平均可见度 $V_{\mathrm{mean}}$** 。如果要找一个 AO 控制因子，那么就没有比它更合适的了。
+
+不过，为什么是 "$\approx$" ？因为积分中值定理要求函数 $f$ 在积分域上连续，而可见性函数 $V$ 是一个取值在 $\{0,1 \}$ 的阶跃函数，并不严格满足定理的成立条件。但 who cares!  ~数学家 vs 工程师，你们知道吗（~
+
+需要注意的是，这个约等本身也是有程度的，如果 $f_r L_i \cos\theta_i $ 的支撑集过窄（极小光源、尖锐 BRDF 等），半球总体的平均可见度 $V_{\mathrm{mean}}$ 就会抹掉这些高能量方向的小范围实际可见度，导致最终 radiance 偏小。
+
+## SSAO: Screen Space Ambient Occlusion
+前面得到了 AO 因子 $\frac{1}{\pi}\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i$，那么我们就要计算它。在实时渲染里直接算这个积分的精确值是不行的，我们只能做少量的 sampling。
+
+
+假设已经获得当前像素对应的表面位置 $p$ 和法线 $\mathbf{n}$，在以 $p$ 为中心、沿法线朝向的半球中生成一组采样点：
+
+$$
+q_i=p+r_i,\qquad r_i\in \Omega(\mathbf{n})
+$$
+
+其中，$\Omega(\mathbf{n})$ 表示以 $\mathbf{n}$ 为朝向的采样半球，$r_i$ 是采样偏移。将这些采样点投影到屏幕空间，查询对应位置的深度缓冲区，就可以据此判断采样点附近是否存在遮挡几何体，最后做个加权平均即可。
+
+
+## GTAO: Ground Truth Ambient Occlusion
