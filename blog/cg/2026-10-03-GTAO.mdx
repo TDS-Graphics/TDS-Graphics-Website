@@ -60,12 +60,14 @@ $$
 
 这里很显而易见了，左侧的 $\frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\pi}$ 就是从单位半球顶部投影下去的**可视区域面积和总面积的比值**，也即半球空间内的 **平均可见度 $V_{\mathrm{mean}}$** 。如果要找一个 AO 控制因子，那么就没有比它更合适的了。
 
+![Ratio](../assets/2026-10-03-GTAO/hemi_ssao.png)
+
 不过，为什么是 "$\approx$" ？因为积分中值定理要求函数 $f$ 在积分域上连续，而可见性函数 $V$ 是一个取值在 $\{0,1 \}$ 的阶跃函数，并不严格满足定理的成立条件。但 who cares!  ~数学家 vs 工程师，你们知道吗（~
 
 需要注意的是，这个约等本身也是有程度的，如果 $f_r L_i \cos\theta_i $ 的支撑集过窄（极小光源、尖锐 BRDF 等），半球总体的平均可见度 $V_{\mathrm{mean}}$ 就会抹掉这些高能量方向的小范围实际可见度，导致最终 radiance 偏小。
 
 ## SSAO: Screen Space Ambient Occlusion
-前面得到了 AO 因子 $\frac{1}{\pi}\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i$，那么我们就要计算它。在实时渲染里直接算这个积分的精确值是不行的，我们只能做少量的 sampling。
+前面得到了 AO 因子 $A(p) = \frac{1}{\pi}\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i$，那么我们就要计算它。在实时渲染里直接算这个积分的精确值是不行的，我们只能做少量的 sampling。
 
 
 假设已经获得当前像素对应的表面位置 $p$ 和法线 $\mathbf{n}$，在以 $p$ 为中心、沿法线朝向的半球中生成一组采样点：
@@ -74,7 +76,40 @@ $$
 q_i=p+r_i,\qquad r_i\in \Omega(\mathbf{n})
 $$
 
-其中，$\Omega(\mathbf{n})$ 表示以 $\mathbf{n}$ 为朝向的采样半球，$r_i$ 是采样偏移。将这些采样点投影到屏幕空间，查询对应位置的深度缓冲区，就可以据此判断采样点附近是否存在遮挡几何体，最后做个加权平均即可。
+其中，$\Omega(\mathbf{n})$ 表示以 $\mathbf{n}$ 为朝向的半球，$r_i$ 是采样位置偏移。
+
+![SSAO hemisphere](../assets/2026-10-03-GTAO/fig3.png)
+
+将这些采样点投影到屏幕空间，查询对应位置的深度缓冲区，就可以据此判断采样点附近是否存在遮挡几何体（这个过程和 Shadow Mapping 的思想一致），最后做加权平均即可得到 AO 值。
 
 
 ## GTAO: Ground Truth Ambient Occlusion
+本文的重点是 GTAO，它是[动视](https://research.activision.com/publications/archives/practical-real-time-strategies-for-accurate-indirect-occlusion)提出的一个方法。刚刚我们看到，虽然 SSAO 的思想确实是估计 AO 因子 $A(p)$，但是却不那么精确，抛开这个数学背景也很好理解。
+
+而 GTAO 则不一样，它的名字就带了个 **"ground truth"**，可以猜出它是一种更硬的方法（事实也的确如此）。
+
+> Ground Truth：中文译名为“基准真相”或“基准真值”，在图形学领域有一种 **“渲染的标准答案”** 的意味。例如，我们经常将 Path Tracing 方法的渲染结果作为 ground truth，比较各类实时 GI 算法的差异。~题外话：path tracing 不一定就是对的（它无法模拟波动光学~
+
+回到 AO 因子的积分式：
+
+$$
+A(p) = \frac{1}{\pi}\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i
+$$
+
+事实上，它是一个二重积分，因为我们使用的微分是立体角的，即 $\omega = (\theta, \phi)$。如果要展开成二重积分，根据 $\mathrm d\omega=\sin\theta\,\mathrm d\theta\,\mathrm d\phi$，就得参数化成这样：
+
+$$
+\begin{aligned}
+
+A(p)
+&=\frac{1}{\pi}\int_0^{2\pi}
+\int_0^{\pi/2}
+V(\theta,\phi,p)\cos\theta
+\sin\theta\,\mathrm d\theta\,\mathrm d\phi\\
+&=\frac{1}{\pi}\int_0^{\pi}
+\int_{-\pi/2}^{\pi/2}
+V(\theta,\phi,p)\cos\theta
+|\sin\theta| \mathrm{d}\theta\,\mathrm d\phi
+
+\end{aligned}
+$$
