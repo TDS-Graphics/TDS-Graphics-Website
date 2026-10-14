@@ -12,7 +12,7 @@
   
 看完那些视频只用花两周的时间，但是把素质培养起来是个漫长的过程，在这个阶段之后也需要随时关心一些优质的图形学内容。
 
-第零阶段的具体内容页在此：[**阶段 0 | TDS Graphics**](../tutorials/stage0)
+第零阶段的具体内容页在此：[**阶段 0 | TDS Graphics**](/tutorials/unified-roadmap-course/stage0)
   
 ## 第一阶段
 **通过本阶段的学习，你将可以：**
@@ -43,7 +43,7 @@
 
 拓展知识方面，我们会在一些内容提及这些更高级的数学在图形学或其它领域的体现，感兴趣的朋友可以了解一下~
 
-第一阶段的具体内容页在此：[**阶段 1 | TDS Graphics**](../tutorials/stage1)
+第一阶段的具体内容页在此：[**阶段 1 | TDS Graphics**](/tutorials/unified-roadmap-course/stage1)
 
 ### 基本工具链和 C++ 编程语言
 
@@ -94,7 +94,7 @@ C++ 是一门多范式的高性能编程语言，常用于渲染器和游戏引�
 第二阶段结束之时会组织一个自愿参加的项目展（TDSG Showcase），参考[**加州大学伯克利分校的 CS184/284A 图形学课程**](https://cs184.eecs.berkeley.edu/su26/project/)，这里面的东西真的超棒超好玩的！
 
 
-第二阶段的具体内容页在此 ~（目前还是新建文件夹状态）~ ：[**阶段 2 | TDS Graphics**](../tutorials/stage2)
+第二阶段的具体内容页在此 ~（目前还是新建文件夹状态）~ ：[**阶段 2 | TDS Graphics**](/tutorials/unified-roadmap-course/stage2)
 
 ## 第三阶段
   准确地说是第 3 ~ ∞ 阶段。从本阶段开始，就是 100% 的自由探索咯。但是学习和实践仍然是不能停的！

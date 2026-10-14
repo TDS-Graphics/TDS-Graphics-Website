@@ -4,6 +4,8 @@
 // There are various equivalent ways to declare your Docusaurus config.
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
+import fs from 'fs';
+import path from 'path';
 import {themes as prismThemes} from 'prism-react-renderer';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
@@ -18,6 +20,36 @@ const mathRehypePlugins = [
     },
   ],
 ];
+
+// 自动扫描 tutorials/ 目录：每个包含 docs/ 的子目录都会注册为一个独立教程。
+// 教程目录下可选放 tutorial.json 提供 title/description/position/tags。
+const tutorialsRoot = path.join(__dirname, 'tutorials');
+
+const tutorials = (fs.existsSync(tutorialsRoot)
+  ? fs.readdirSync(tutorialsRoot, {withFileTypes: true})
+  : []
+)
+  .filter(
+    (entry) =>
+      entry.isDirectory() &&
+      !entry.name.startsWith('.') &&
+      !entry.name.startsWith('_') &&
+      fs.existsSync(path.join(tutorialsRoot, entry.name, 'docs')),
+  )
+  .map((entry) => {
+    const metadataPath = path.join(tutorialsRoot, entry.name, 'tutorial.json');
+    const metadata = fs.existsSync(metadataPath)
+      ? JSON.parse(fs.readFileSync(metadataPath, 'utf8'))
+      : {};
+    return {
+      name: entry.name,
+      title: metadata.title ?? entry.name,
+      description: metadata.description ?? '',
+      position: metadata.position ?? Number.MAX_SAFE_INTEGER,
+      tags: metadata.tags ?? [],
+    };
+  })
+  .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -85,12 +117,12 @@ const config = {
   ],
 
   plugins: [
-    [
+    ...tutorials.map((tutorial) => [
       '@docusaurus/plugin-content-docs',
       {
-        id: 'tutorials',
-        path: 'tutorials/unified-roadmap-course/docs',
-        routeBasePath: 'tutorials',
+        id: tutorial.name,
+        path: `tutorials/${tutorial.name}/docs`,
+        routeBasePath: `tutorials/${tutorial.name}`,
         sidebarPath: './tutorialsSidebars.js',
         remarkPlugins: mathRemarkPlugins,
         rehypePlugins: mathRehypePlugins,
@@ -99,8 +131,12 @@ const config = {
         editUrl:
           'https://github.com/TDS-Graphics/TDS-Graphics-Website/edit/main/',
       },
-    ],
+    ]),
   ],
+
+  customFields: {
+    tutorials,
+  },
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

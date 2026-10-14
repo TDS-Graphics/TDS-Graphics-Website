@@ -77,10 +77,21 @@ TDS-Graphics-Website/
 ├── docs/                  # 文档内容
 ├── src/                   # 自定义样式
 ├── static/                # 静态资源（图片等）
-├── tutorials/             # 具体的教程目录
+├── tutorials/             # 教程目录（每个含 docs/ 的子目录自动注册为一个独立教程）
 │    └── unified-roadmap-course/  # 统一学习路线
 ├── docusaurus.config.js   # Docusaurus 配置文件
 ├── sidebars.js            # 文档侧边栏配置
 ├── package.json           # 项目依赖与脚本
 └── README.md              # 本文件
+```
+
+新增教程时，只需在 `tutorials/` 下新建一个包含 `docs/` 的子目录，构建时会自动注册为独立教程（访问路径为 `/tutorials/<目录名>/`），无需修改 `docusaurus.config.js`。教程目录下可以放一个可选的 `tutorial.json`，用于在「教程总览」页展示标题、简介、排序和标签：
+
+```json
+{
+  "title": "教程标题",
+  "description": "一句话简介",
+  "position": 1,
+  "tags": ["标签一", "标签二"]
+}
 ```
