@@ -1,0 +1,97 @@
+---
+slug: /
+sidebar_position: 1
+sidebar_label: 介绍
+title: 介绍
+---
+
+## 为什么游戏需要物理引擎
+在游戏中物理引擎其实是可有可无的，这取决于你的游戏是否需要实现物理效果，对于我们常玩的 2D 游戏，如：[プロジェクトセカイ カラフルステージ！ feat. 初音ミク（pjsk）](https://pjsekai.sega.jp/)、[植物大战僵尸](https://www.ea.com/ea-studios/popcap/plants-vs-zombies)、[サノバウィッチ（魔女的夜宴）](https://www.yuzu-soft.com/new/product/sothewitch/)等等是不需要使用到物理引擎的呀！即使是 [Minecraft](https://www.minecraft.net/) 这种 3D 游戏也不会用到物理引擎 ~所以就会出现悬浮的沙块这种现象~ ~
+
+但是在大多数 3D 游戏中，如下这些人类史上出色的游戏都需要使用游戏物理引擎提供的物理效果。
+### [Half-Life: Alyx](https://store.steampowered.com/app/546560/HalfLife_Alyx/)
+![Half-Life:Alyx](/assets/tutorials/physics-engine/README/half-life-alyx.jpg)
+Half-Life: Alyx 是一款 VR 游戏，在 VR 游戏中物理引擎尤为重要，因为相比平面游戏， VR 带来的真实感是无与伦比的。正是因为 VR 带来的极强的真实感，如果物理引擎不能提供符合直觉的惯性、重量感和碰撞反馈，大脑就会感到矛盾，让玩家感到晕动症。如果没有物理引擎实时计算碰撞、摩擦、重力，你的手会直接穿模，或者杯子像焊死在桌上一样纹丝不动，沉浸感瞬间归零。
+
+### [Portal 2](https://store.steampowered.com/app/620/Portal_2/)
+![Portal2](/assets/tutorials/physics-engine/README/portal.jpg)
+Portal 2 是一款基于物理的但超越现实世界物理的解密游戏 ~没错学习计算机图形学你可以成为创始者，在虚拟世界中制定非现实的物理定律~，在游戏中玩家可以通过 传送门 进行空间穿梭，轻松到达一些难以直接到达的位置，传送门能保持在穿过传送门时动量守恒。除此之外，玩家需要利用基于物理的方块、激光等激光进行解密。
+
+### [塞尔达传说：王国之泪](https://www.nintendo.com/jp/character/zelda/index.html)
+![Portal2](/assets/tutorials/physics-engine/README/zelda.jpg)
+塞尔达传说：王国之泪是一款沙盒大世界探索游戏，这一版塞尔达相比于前代提供了自由度非常高的基于物理的创造搭建玩法，可以抓取、拼接几乎任何物体，并安装风扇等内容，可以造船、造车、造飞机。而没有物理引擎这是无法做到的。
+
+---
+
+## 你能学到什么
+在这里目前（未来不知道会不会开更新的 3D 内容，看 Artichoke 有没有时间）我们打算教授基本的 **2D 刚体游戏物理引擎**的原理，以及简单的 **2D 流体模拟**。由于 Artichoke 也不是这个领域的专家，所以并不能实现一个能媲美先进最成功的物理引擎，不过你依然能在这学到物理引擎的基本原理，如果你继续深造则需要自己去探索了，我们的任务是领你进门。  
+
+具体的你能学到的内容（暂定随时调整）:   
+我们将以一个构建一个项目的形式开始我们的教程，这样最后你们也能得到一个自己的物理引擎。  
+我们的教程代码将同步到：https://github.com/TDS-Graphics/simple_physics_engine.git  
+2D 刚体游戏物理引擎：
+
+1. 数值积分（Numerical Integration）
+- 隐式欧拉
+- Verlet 
+- 固定时间步长与子步进
+
+2. 碰撞检测（Collision Detection）
+- AABB
+- SAT（分离轴定理）
+- GJK、EPA
+- 宽相位与窄相位
+
+3. 接触生成（Contact Generation）
+- 接触点与接触法线
+- Reference Face / Incident Edge
+- Polygon Clipping
+- 接触流形（Contact Manifold）
+- 接触点穿透深度
+
+4. 约束求解（Constraint Solver）
+
+2D 流体物理引擎
+
+
+
+> 这里是国内为数不多的游戏引擎引擎的中文教学了。（相比渲染，做物理的资料更少）  
+
+ ---
+## 其他
+### Box3D
+最近 ~2026年8月份~ 著名的 2D 物理引擎 [Box2D](https://github.com/erincatto/box2d) 开发者 Erin Catto 由于在使用 Unreal Engine 开发属于他自己的游戏时为了解决 Chaos 物理引擎的问题联合了开发了 [Half-Life: Alyx](https://store.steampowered.com/app/546560/HalfLife_Alyx/) 物理引擎的程序员 Dirk Gregorius 发开了一款新的开源 3D 游戏引擎 [Box3D](https://github.com/erincatto/box3d)。  
+
+具体详情可看：https://box2d.org/posts/2026/06/announcing-box3d/
+或者下面的视频
+<div align="center">
+
+<iframe width="960" height="580" 
+src="https://www.youtube.com/embed/LYdjXNYdzzc?si=6GZfGeYUBObDTNvx" 
+title="YouTube video player" 
+frameborder="0" 
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" 
+allowfullscreen>
+</iframe>
+
+</div>
+
+### Artichoke 是怎么接触到物理引擎的
+
+ Artichoke 高中时期对物理学非常感兴趣 ~（现在依然很感兴趣，但是没时间学）~，同时 Artichoke 还懂一点点编程，并且在由于某些契机在 Bilibili 上看到一个人自制的物理引擎的视频，如下
+ <iframe width="960" height="580" 
+ src="//player.bilibili.com/player.html?isOutside=true&aid=703632500&bvid=BV1Am4y157hT&cid=1271728731&p=1" 
+ scrolling="no" 
+ border="0" 
+ frameborder="no" 
+ framespacing="0" 
+ allowfullscreen="true">
+ </iframe>
+ Artichoke 觉得非常的酷啊，就想自己能不能开发一个物理引擎用于在计算机上模拟各种课本上的物理题，就沿着这条路一路深入了，但是由于物理模拟也是计算机图形学领域的分支，所以 Artichoke 了解到了图形学这个学科，并且 Artichoke 的理想从开发一个物理引擎转变到开发一个游戏引擎了，从而深入计算机图形学领域。
+
+### 一些学习资料
+我们会参考其中的内容并组织成我们自己的，所以如果你看完我们的教程，想继续深造可以看看下面的资料  
+- https://box2d.org/publications/
+- https://dyn4j.org/blog/
+- https://chrishecker.com/Rigid_Body_Dynamics
+- https://majikayogames.github.io/physics-tutorial/

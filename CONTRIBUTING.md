@@ -85,7 +85,7 @@ TDS-Graphics-Website/
 └── README.md              # 本文件
 ```
 
-新增教程时，只需在 `tutorials/` 下新建一个包含 `docs/` 的子目录，构建时会自动注册为独立教程（访问路径为 `/tutorials/<目录名>/`），无需修改 `docusaurus.config.js`。教程目录下可以放一个可选的 `tutorial.json`，用于在「教程总览」页展示标题、简介、排序和标签：
+新增教程时，只需在 `tutorials/` 下新建一个包含 `docs/` 的子目录，构建时会自动注册为独立教程（访问路径为 `/tutorials/<目录名>/`），无需修改 `docusaurus.config.js`。教程的 `docs/` 里需要有一个带 `slug: /` 的入口文档（如 `index.md` 或 `README.md`）注意教程列表只在启动时扫描，新增教程后需要重启开发服务器（`npm start`）。教程目录下可以放一个可选的 `tutorial.json`，用于在「教程总览」页展示标题、简介、排序和标签：
 
 ```json
 {
