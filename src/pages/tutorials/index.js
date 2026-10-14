@@ -8,7 +8,7 @@ import styles from './index.module.css';
 
 const BACKGROUNDS = [
   '/img/renderman-swatch.jpg',
-  '/img/dragon.jpg',
+  '/img/stormtrooper.jpg',
   '/img/dining-room.jpg',
 ];
 
