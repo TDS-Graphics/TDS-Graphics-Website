@@ -1,0 +1,425 @@
+---
+title: 理解MVP Transformation
+authors: [Memoria]
+tags: [cg]
+date: 2026-10-14T22:00
+---
+
+
+> 这是我的第一篇博客，我想学到更多图形学的内容，我想创作一些东西出来。
+
+
+{/*truncate*/}
+前段时间做完了 games101 作业 1，其中要求填写的 MVP 矩阵部分让我的理解得到提升。\
+趁机将 Unity shader 入门精要的第四章温故了一遍，又将虎书(Fundamental of Computer Graphics 5th)的第八章学习了一遍。想在此次 blog 中写下自己现在对 MVP 矩阵变换的理解，借此加强认知。
+
+## MVP Transformation 简介
+
+**MVP Transformation** 是将二维/三维模型从 object space 转换到 clip space 的过程，\
+而 **Matrix（矩阵）** 则是在空间内变换的实质工具。\
+通过矩阵计算，模型上的每个**点**所代表的坐标会进行一定程度的改变，将所有点组合起来看，就能反映出模型整体在不同空间下的变换了。
+
+> 我们可以先借由 blender 的球模型来进行图示理解。
+<div className="row">
+  <div className="col col--6">
+  ![object space](../assets/2026-10-14-MVPTransformation/point1.png)
+  </div>
+  <div className="col col--6">
+  ![world space](../assets/2026-10-14-MVPTransformation/point2.png)
+  </div>
+</div>
+
+下面将从我的认知顺序，进行对其具体理解的阐述。
+
+## Different spaces 不同的坐标空间
+
+我们先从虎书的一张示意图开始了解。
+> 虎书 Figure8.2. The sequence of spaces and transformation that gets objects from their original coordinates into screen space.
+
+![space](../assets/2026-10-14-MVPTransformation/space1.png)
+
+能够看到，起点是 **object space（物体空间）**，而终点是 **screen space（屏幕空间）**。在这之中，进行了多个坐标空间的转换，其中在第四个空间这里和 games101 讲述有所出入
+> 我将日常习惯罗列出来，注意和虎书示意图**不同的地方**
+:::info
+object space（物体空间） -> world space（世界空间） -> camera space（相机空间）
+-> clip space（裁剪空间） -> NDC -> screen space（屏幕空间）
+:::
+
+虎书并不单独区分 clip space 和 NDC，而是把「投影 + 透视除法」之后得到的那个 $[-1,1]^3$ 立方体统称为 canonical view volume（规范视体）
+而我们平时所说的 MVP 变换，正是这其中 \
+**object space -> world space -> camera space -> clip space** \
+<u>**4 个坐标空间，3 次变换的过程**</u>
+
+理解了 MVP 所代表的过程范围，下面来具体理解 matrix（矩阵）和 transformation（变换）
+## Matrices and transformations 
+
+**如何理解将一个在坐标空间变换到另一个坐标空间？** 在这里我们可以从 Unity shader 入门精要的文段中进行理解。
+
+> Unity shader 入门精要 4.6.2 坐标空间的变换\
+>"我们知道，要想定义一个坐标空间，必须指明其原点位置和 3 个坐标轴的方向。而这些数值实际上是相对于另一个坐标空间的（读者需要记住，所有的都是相对的）。
+也就是说，坐标空间会形成一个层次结构----每一个坐标空间都是另一个坐标空间的子空间，反过来说，每个空间都有一个父(parent)坐标空间。
+对坐标空间的变换实际上就是在父空间和子空间之间对点和矢量进行交换。"
+
+总结来说，对于我们要进行的 MVP 坐标空间变换，即是通过数学将各个点和矢量 改变成对应坐标空间内的形态。而在数学上，我们拥有一个便捷直观的工具来进行运算，它即是 **Matrix 矩阵**。
+也就是说，我们用矩阵来表达 **Transformation 变换**，使用矩阵来计算具体坐标。
+
+下面我们来到正式认知 MVP 三大变换，先来宏观浏览
+> M_model, M_view, M_proj 均为简写，全称见下文
+
+![transform](../assets/2026-10-14-MVPTransformation/transform1.png)
+
+我们已经知道 MVP 指的是 object space -> world space -> camera space -> clip space 的过程。那么显然三大变换就是
+
+(1) object space → world space —— **Modeling transformation**
+
+(2) world space → camera space —— **Camera transformation/View transformation**
+
+(3) camera space → clip space —— **Projection transformation**
+
+> 显然 MVP 采取的是三步变换的首字母
+
+
+认识到 MVP 的指代后，下一步自然是如何去实现每个变换。
+
+## Modeling Transformation
+
+**如何理解从模型空间变换到世界空间？** 我们可以借助 unity 来直观看到。
+
+>注意看到彩色小球身上的坐标轴，它正是小球自身的模型空间体现，这个物体拥有自己的原点，三条坐标轴。 \
+>再注意到小球下方的网格，它正是这个 Scene 场景中的坐标网格。也就是说，把 Scene 理解成世界空间，站在 Scene 的视角下，小球的原点正是世界坐标中的一个点，它的三条坐标轴也都可以用世界坐标中的矢量来表示
+
+![modeling](../assets/2026-10-14-MVPTransformation/modeling1.png)
+
+>所以可以看到 Inspector 的 Transform 属性中，小球的 position 为一个可以用(x,y,z)表示的点。
+
+![modeling](../assets/2026-10-14-MVPTransformation/modeling2.png)
+
+模型空间的原点转变成世界空间的一个点，模型空间的三条坐标轴方向转变成世界空间的三条坐标轴方向。\
+所以说，我们完全能够用表达式来表示这一变换的过程。
+
+$$
+M_{\mathrm{model}} = T \cdot R \cdot S =
+\begin{bmatrix}
+1 & 0 & 0 & t_x \\
+0 & 1 & 0 & t_y \\
+0 & 0 & 1 & t_z \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+\cos\theta & 0 & \sin\theta & 0 \\
+0 & 1 & 0 & 0 \\
+-\sin\theta & 0 & \cos\theta & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+k_x & 0 & 0 & 0 \\
+0 & k_y & 0 & 0 \\
+0 & 0 & k_z & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+> 这里 T R S 分别代表着 **Translate 位移** **Rotation 旋转** **Scale 位移** 三种矩阵，从右往左矩阵相乘计算
+
+这里给出一个书上的代值计算实例
+> Unity shader 入门精要 4.6.5 世界空间
+$$
+\begin{aligned}
+M_{\mathrm{model}}
+&= \begin{bmatrix}
+1 & 0 & 0 & 5 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 25 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+-0.866 & 0 & 0.5 & 0 \\
+0 & 1 & 0 & 0 \\
+-0.5 & 0 & -0.866 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+2 & 0 & 0 & 0 \\
+0 & 2 & 0 & 0 \\
+0 & 0 & 2 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix} \\
+&= \begin{bmatrix}
+-1.732 & 0 & 1 & 5 \\
+0 & 2 & 0 & 0 \\
+-1 & 0 & -1.732 & 25 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{aligned}
+$$
+
+$$
+\mathbf{p}_{\mathrm{world}} = M_{\mathrm{model}} \mathbf{p}_{\mathrm{model}} =
+\begin{bmatrix}
+-1.732 & 0 & 1 & 5 \\
+0 & 2 & 0 & 0 \\
+-1 & 0 & -1.732 & 25 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix} 0 \\ 2 \\ 4 \\ 1 \end{bmatrix}
+=
+\begin{bmatrix} 9 \\ 4 \\ 18.072 \\ 1 \end{bmatrix}
+$$
+
+
+## Camera/View Transformation
+
+camera space 摄像机空间，也被称为 view space 观察空间。 \
+我们得清楚，camera 就相当于我们在 world space 里的 eye, 我们是通过 eye 来看到图像的。 \
+也就是说，在世界空间上，知道了模型坐标，也一直知道摄像机坐标，那就可以通过 model->world->camera 的传递方式，让 camera 知道 model 的具体 position 位置和 orientation 朝向
+> 依旧用 Unity 来进行直观感受
+
+![modeling](../assets/2026-10-14-MVPTransformation/camera1.png)
+
+这里可以使用一个技巧，我们的目的是将 world space 坐标下的物体以 camera 自身坐标空间来表示，也就是得将 world space 坐标矩阵变到 camera space。 \
+此时我们可以反过来思考，将 camera space 自身原点和 world space 自身原点重合，再将 camera space 自身三条轴向和 world space 三条轴向重叠，此时物体相对 camera 在世界坐标下的位置不变，但物体自身在世界坐标的位置和朝向也就进行了变换 \
+也就是说，我们可以通过逆变换进行两步 
+
+1. 在世界坐标下，将 camera 移动至 world space 的原点。 
+
+2. 移动后，将 camera 三条轴向旋转至世界 x,y,z 轴向。 
+> **（注意！）由于选择的左右手坐标系不同，常会有 Z 的朝向恰好相反的出现 \
+例如 Unity 在模型空间和世界空间选用的都是左手坐标系，而在观察空间中使用的是右手坐标系，这符合 OpenGL 传统，即摄像机正前方指向的是 -z 轴方向** 
+
+> 虎书 8.1.3 The Camera Transformation
+![modeling](../assets/2026-10-14-MVPTransformation/camera3.png)
+
+> 虎书 8.1 Viewing Transformation
+![modeling](../assets/2026-10-14-MVPTransformation/camera2.png)
+
+之后再把达到这个功能的 Matrix 乘给 world space 下的物体 Matrix 即可做到第二步变换 Camera Transformation
+
+> Unity shader 入门精要 4.6.6 观察空间 
+
+> 摄像机的世界变换是先按 $(30, 0, 0)$ 旋转、再按 $(0, 10, -10)$ 平移。要得到视图变换，需要对它做**逆变换**：先平移 $(0, -10, 10)$ 回到原点，再旋转 $-30^\circ$ 让坐标轴与世界轴重合。
+
+$$
+\begin{aligned}
+M_{\mathrm{view}} &=
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta & 0 \\
+0 & \sin\theta & \cos\theta & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & t_x \\
+0 & 1 & 0 & t_y \\
+0 & 0 & 1 & t_z \\
+0 & 0 & 0 & 1
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0.866 & 0.5 & 0 \\
+0 & -0.5 & 0.866 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & -10 \\
+0 & 0 & 1 & 10 \\
+0 & 0 & 0 & 1
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0.866 & 0.5 & -3.66 \\
+0 & -0.5 & 0.866 & 13.66 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{aligned}
+$$
+
+> 由于观察空间使用的是**右手坐标系**，还需要对 $z$ 分量取反。乘以 $M_{\mathrm{negate\_z}}$ 得到最终的视图矩阵：
+
+$$
+\begin{aligned}
+M_{\mathrm{view}} &= M_{\mathrm{negate\_z}} \, M_{\mathrm{view}} \\
+&=
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & -1 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0.866 & 0.5 & -3.66 \\
+0 & -0.5 & 0.866 & 13.66 \\
+0 & 0 & 0 & 1
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0.866 & 0.5 & -3.66 \\
+0 & 0.5 & -0.866 & -13.66 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{aligned}
+$$
+
+> 现在可以用它做顶点变换了：
+$$
+\begin{aligned}
+\mathbf{p}_{\mathrm{view}} &= M_{\mathrm{view}} \, \mathbf{p}_{\mathrm{world}} \\
+&=
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 0.866 & 0.5 & -3.66 \\
+0 & 0.5 & -0.866 & -13.66 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix} 9 \\ 4 \\ 18.072 \\ 1 \end{bmatrix}
+=
+\begin{bmatrix} 9 \\ 8.84 \\ -27.31 \\ 1 \end{bmatrix}
+\end{aligned}
+$$
+
+> 于是得到了 camera space 中的位置(9,8.84,-27.31)
+
+
+## Projection Transformation
+
+投影变换是从 camera space 到 clip space 的过程，变换的矩阵叫做 projection matrix（投影矩阵）或者 clip matrix（裁剪矩阵）。 \
+裁剪空间的目的是方便对渲染图元进行裁剪：完全位于这块空间内部的图元将会被保留，而完全在外部的则会被提出，于边界相交的图元则是被裁剪。 \
+其中，决定这块空间的是 **view frustum 视锥体** 
+
+值得注意的是，视锥体分为两个类型，也就是说 projection transformation 分为两种投影，一种是 **orthographic projectio（正交投影）** ，一种是 **perspective projectio（透视投影）**
+
+我们先借图来理解两种投影视锥体
+>虎书 Figure 8.12. 上为 perspective projection 下为 orthographic projection
+
+![modeling](../assets/2026-10-14-MVPTransformation/project1.png)
+
+
+首先我们得清楚视锥体共有 6 块裁剪平面，其中有两块裁剪平面尤为特殊， \
+分别是 **near clip plan（近剪裁平面）** 和 **far clip plan（远剪裁平面）**，它们决定了摄像机可以看到的深度范围。
+> Unity shader 入门精要 4.6.7
+![modeling](../assets/2026-10-14-MVPTransformation/project3.png)
+
+**如何理解投影？** 可以理解成一个空间的降维，但投影矩阵实际上并没有执行降维，只是为后续在真正的投影，即屏幕映射的齐次除法做准备。
+
+我们先看 **orthographic projection 正交投影**
+
+
+![modeling](../assets/2026-10-14-MVPTransformation/project4.png)
+> Unity shader 入门精要 4.6.7
+
+>我们先确定好变量指代 l,r（近平面上的左、右边界）, b,t（近平面上的下、上边界）, n,f（近、远平面距离） 
+
+推得正交投影的投影矩阵为：
+$$
+M_{\mathrm{ortho}} =
+\begin{bmatrix}
+\dfrac{2}{r-l} & 0 & 0 & -\dfrac{r+l}{r-l} \\[6pt]
+0 & \dfrac{2}{t-b} & 0 & -\dfrac{t+b}{t-b} \\[6pt]
+0 & 0 & -\dfrac{2}{f-n} & -\dfrac{f+n}{f-n} \\[6pt]
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+
+此时当我们选择使用正交投影时，即可在得到投影矩阵后进行计算：
+$$
+\mathbf{p}_{\mathrm{clip}} = M_{\mathrm{ortho}} \, \mathbf{p}_{\mathrm{view}} =
+\begin{bmatrix}
+\dfrac{2}{r-l} & 0 & 0 & -\dfrac{r+l}{r-l} \\[6pt]
+0 & \dfrac{2}{t-b} & 0 & -\dfrac{t+b}{t-b} \\[6pt]
+0 & 0 & -\dfrac{2}{f-n} & -\dfrac{f+n}{f-n} \\[6pt]
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix}
+=
+\begin{bmatrix}
+\dfrac{2x-(r+l)}{r-l} \\[8pt]
+\dfrac{2y-(t+b)}{t-b} \\[8pt]
+-\dfrac{2z}{f-n}-\dfrac{f+n}{f-n} \\[8pt]
+1
+\end{bmatrix}
+$$
+
+
+接着我们来看 **perspective projection 透视投影**
+
+![modeling](../assets/2026-10-14-MVPTransformation/project2.png)
+
+如图，在透视投影中，我们也引入近平面和远平面的概念，用来限定可见的距离范围。在这个语境下，我们把近平面当作投影平面，于是像平面距离为$-n$
+而将左图变成右图，则需要对 $x,y$ 进行映射，即是 
+$$
+y_s = \frac{n}{z}\,y, \qquad x_s = \frac{n}{z}\,x
+$$ 
+也就是说，我们仍可以用矩阵来完成这步映射：
+> 虎书给出了这样一个矩阵 （留意第三行，这是人为约束解出的）
+$$
+\mathbf{P} =
+\begin{bmatrix}
+n & 0 & 0 & 0 \\
+0 & n & 0 & 0 \\
+0 & 0 & n+f & -fn \\
+0 & 0 & 1 & 0
+\end{bmatrix}.
+$$ 
+> 因为 $z$ 为负，除以 $z$ 会让 $y_s$ 带上负号——像自然上下颠倒，这正是「以近平面为投影平面」时物理上应有的倒像。
+不过图形管线并不需要这个倒像，它希望把视锥直接压成一个标准立方体。于是改用 $w'=-z$ 的**挤压矩阵**：
+$$
+M_{\mathrm{persp}\to\mathrm{ortho}} =
+\begin{bmatrix}
+n & 0 & 0 & 0 \\
+0 & n & 0 & 0 \\
+0 & 0 & n+f & nf \\
+0 & 0 & -1 & 0
+\end{bmatrix}
+$$
+挤压矩阵的作用，只是把透视视景体映射到正交视景体，也就是说，接下来的步骤和正交投影一致了。
+$$
+M_{\mathrm{ortho}} =
+\begin{bmatrix}
+\dfrac{2}{r-l} & 0 & 0 & -\dfrac{r+l}{r-l} \\[6pt]
+0 & \dfrac{2}{t-b} & 0 & -\dfrac{t+b}{t-b} \\[6pt]
+0 & 0 & -\dfrac{2}{f-n} & -\dfrac{f+n}{f-n} \\[6pt]
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$
+$$
+\begin{aligned}
+M_{\mathrm{persp}} &= M_{\mathrm{ortho}} \cdot M_{\mathrm{persp}\to\mathrm{ortho}} \\[6pt]
+&=
+\begin{bmatrix}
+\dfrac{2n}{r-l} & 0 & \dfrac{r+l}{r-l} & 0 \\[6pt]
+0 & \dfrac{2n}{t-b} & \dfrac{t+b}{t-b} & 0 \\[6pt]
+0 & 0 & -\dfrac{f+n}{f-n} & -\dfrac{2fn}{f-n} \\[6pt]
+0 & 0 & -1 & 0
+\end{bmatrix}
+\end{aligned}
+$$
+最后进行透视投影的计算：
+$$
+\mathbf{p}_{\mathrm{clip}} = M_{\mathrm{persp}} \, \mathbf{p}_{\mathrm{view}} =
+\begin{bmatrix}
+\dfrac{2n}{r-l} & 0 & \dfrac{r+l}{r-l} & 0 \\[6pt]
+0 & \dfrac{2n}{t-b} & \dfrac{t+b}{t-b} & 0 \\[6pt]
+0 & 0 & -\dfrac{f+n}{f-n} & -\dfrac{2fn}{f-n} \\[6pt]
+0 & 0 & -1 & 0
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \\ 1 \end{bmatrix}
+=
+\begin{bmatrix}
+\dfrac{2n\,x + (r+l)\,z}{r-l} \\[8pt]
+\dfrac{2n\,y + (t+b)\,z}{t-b} \\[8pt]
+-\dfrac{f+n}{f-n}z - \dfrac{2fn}{f-n} \\[8pt]
+-z
+\end{bmatrix}
+$$
+
+至此，我们将坐标从相机空间转换到了裁剪空间，完成了 MVP Transformation 的最后一步 Projection transformation。
+
+## 结语 About Application
+在 Unity shader 中，MVP Transformation 步骤并不是要求写者将这些矩阵一一列出来计算，而是给出了内置矩阵变量，只需要调用即可进行使用。
+例如 CG 语言中的 UNITY_MATRIX_MVP 。而在 games101 的前置作业中，实现软光栅则是需要将其拆解细究。 \
+故在我目前学习中，常产生一种双向促进。学习图形学底层知识，能让我真正理解写 shader 做效果；想写一些超出现有认知的 shader 效果，那就再学习一些图形学知识。 \
+选择性学习是我现在深有体会的重要感悟，今后我也会写一些 shader 效果的 blog 来促进自己的认知，希望能够达到双向促进的正循环。
+> 写 blog 感觉思绪厘清了很多。 _ovoY
