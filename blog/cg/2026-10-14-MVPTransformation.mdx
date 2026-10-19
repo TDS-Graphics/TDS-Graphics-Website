@@ -1,5 +1,5 @@
 ---
-title: 理解MVPTransformation
+title: 理解MVP Transformation
 authors: [Memoria]
 tags: [cg]
 date: 2026-10-14T22:00
@@ -13,19 +13,19 @@ date: 2026-10-14T22:00
 前段时间做完了 games101 作业 1，其中要求填写的 MVP 矩阵部分让我的理解得到提升。\
 趁机将 Unity shader 入门精要的第四章温故了一遍，又将虎书(Fundamental of Computer Graphics 5th)的第八章学习了一遍。想在此次 blog 中写下自己现在对 MVP 矩阵变换的理解，借此加强认知。
 
-## MVPTransformation 简介
+## MVP Transformation 简介
 
-**MVPTransformation** 是将二维/三维模型从 object space 转换到 clip space 的过程，\
+**MVP Transformation** 是将二维/三维模型从 object space 转换到 clip space 的过程，\
 而 **Matrix（矩阵）** 则是在空间内变换的实质工具。\
 通过矩阵计算，模型上的每个**点**所代表的坐标会进行一定程度的改变，将所有点组合起来看，就能反映出模型整体在不同空间下的变换了。
 
 > 我们可以先借由 blender 的球模型来进行图示理解。
 <div className="row">
   <div className="col col--6">
-  ![object space](../assets/2026-10-14-MVPTransformation/point1.png)
+  ![object space](../assets/2026-10-14-MVP Transformation/point1.png)
   </div>
   <div className="col col--6">
-  ![world space](../assets/2026-10-14-MVPTransformation/point2.png)
+  ![world space](../assets/2026-10-14-MVP Transformation/point2.png)
   </div>
 </div>
 
@@ -36,7 +36,7 @@ date: 2026-10-14T22:00
 我们先从虎书的一张示意图开始了解。
 > 虎书 Figure8.2. The sequence of spaces and transformation that gets objects from their original coordinates into screen space.
 
-![space](../assets/2026-10-14-MVPTransformation/space1.png)
+![space](../assets/2026-10-14-MVP Transformation/space1.png)
 
 能够看到，起点是 **object space（物体空间）**，而终点是 **screen space（屏幕空间）**。在这之中，进行了多个坐标空间的转换，其中在第四个空间这里和 games101 讲述有所出入
 > 我将日常习惯罗列出来，注意和虎书示意图**不同的地方**
@@ -66,7 +66,7 @@ object space（物体空间） -> world space（世界空间） -> camera space�
 下面我们来到正式认知 MVP 三大变换，先来宏观浏览
 > M_model, M_view, M_proj 均为简写，全称见下文
 
-![transform](../assets/2026-10-14-MVPTransformation/transform1.png)
+![transform](../assets/2026-10-14-MVP Transformation/transform1.png)
 
 我们已经知道 MVP 指的是 object space -> world space -> camera space -> clip space 的过程。那么显然三大变换就是
 
@@ -88,11 +88,11 @@ object space（物体空间） -> world space（世界空间） -> camera space�
 >注意看到彩色小球身上的坐标轴，它正是小球自身的模型空间体现，这个物体拥有自己的原点，三条坐标轴。 \
 >再注意到小球下方的网格，它正是这个 Scene 场景中的坐标网格。也就是说，把 Scene 理解成世界空间，站在 Scene 的视角下，小球的原点正是世界坐标中的一个点，它的三条坐标轴也都可以用世界坐标中的矢量来表示
 
-![modeling](../assets/2026-10-14-MVPTransformation/modeling1.png)
+![modeling](../assets/2026-10-14-MVP Transformation/modeling1.png)
 
 >所以可以看到 Inspector 的 Transform 属性中，小球的 position 为一个可以用(x,y,z)表示的点。
 
-![modeling](../assets/2026-10-14-MVPTransformation/modeling2.png)
+![modeling](../assets/2026-10-14-MVP Transformation/modeling2.png)
 
 模型空间的原点转变成世界空间的一个点，模型空间的三条坐标轴方向转变成世界空间的三条坐标轴方向。\
 所以说，我们完全能够用表达式来表示这一变换的过程。
@@ -173,7 +173,7 @@ camera space 摄像机空间，也被称为 view space 观察空间。 \
 也就是说，在世界空间上，知道了模型坐标，也一直知道摄像机坐标，那就可以通过 model->world->camera 的传递方式，让 camera 知道 model 的具体 position 位置和 orientation 朝向
 > 依旧用 Unity 来进行直观感受
 
-![modeling](../assets/2026-10-14-MVPTransformation/camera1.png)
+![modeling](../assets/2026-10-14-MVP Transformation/camera1.png)
 
 这里可以使用一个技巧，我们的目的是将 world space 坐标下的物体以 camera 自身坐标空间来表示，也就是得将 world space 坐标矩阵变到 camera space。 \
 此时我们可以反过来思考，将 camera space 自身原点和 world space 自身原点重合，再将 camera space 自身三条轴向和 world space 三条轴向重叠，此时物体相对 camera 在世界坐标下的位置不变，但物体自身在世界坐标的位置和朝向也就进行了变换 \
@@ -186,10 +186,10 @@ camera space 摄像机空间，也被称为 view space 观察空间。 \
 例如 Unity 在模型空间和世界空间选用的都是左手坐标系，而在观察空间中使用的是右手坐标系，这符合 OpenGL 传统，即摄像机正前方指向的是 -z 轴方向** 
 
 > 虎书 8.1.3 The Camera Transformation
-![modeling](../assets/2026-10-14-MVPTransformation/camera3.png)
+![modeling](../assets/2026-10-14-MVP Transformation/camera3.png)
 
 > 虎书 8.1 Viewing Transformation
-![modeling](../assets/2026-10-14-MVPTransformation/camera2.png)
+![modeling](../assets/2026-10-14-MVP Transformation/camera2.png)
 
 之后再把达到这个功能的 Matrix 乘给 world space 下的物体 Matrix 即可做到第二步变换 Camera Transformation
 
@@ -294,20 +294,20 @@ $$
 我们先借图来理解两种投影视锥体
 >虎书 Figure 8.12. 上为 perspective projection 下为 orthographic projection
 
-![modeling](../assets/2026-10-14-MVPTransformation/project1.png)
+![modeling](../assets/2026-10-14-MVP Transformation/project1.png)
 
 
 首先我们得清楚视锥体共有 6 块裁剪平面，其中有两块裁剪平面尤为特殊， \
 分别是 **near clip plan（近剪裁平面）** 和 **far clip plan（远剪裁平面）**，它们决定了摄像机可以看到的深度范围。
 > Unity shader 入门精要 4.6.7
-![modeling](../assets/2026-10-14-MVPTransformation/project3.png)
+![modeling](../assets/2026-10-14-MVP Transformation/project3.png)
 
 **如何理解投影？** 可以理解成一个空间的降维，但投影矩阵实际上并没有执行降维，只是为后续在真正的投影，即屏幕映射的齐次除法做准备。
 
 我们先看 **orthographic projection 正交投影**
 
 
-![modeling](../assets/2026-10-14-MVPTransformation/project4.png)
+![modeling](../assets/2026-10-14-MVP Transformation/project4.png)
 > Unity shader 入门精要 4.6.7
 
 >我们先确定好变量指代 l,r（近平面上的左、右边界）, b,t（近平面上的下、上边界）, n,f（近、远平面距离） 
@@ -345,7 +345,7 @@ $$
 
 接着我们来看 **perspective projection 透视投影**
 
-![modeling](../assets/2026-10-14-MVPTransformation/project2.png)
+![modeling](../assets/2026-10-14-MVP Transformation/project2.png)
 
 如图，在透视投影中，我们也引入近平面和远平面的概念，用来限定可见的距离范围。在这个语境下，我们把近平面当作投影平面，于是像平面距离为$-n$
 而将左图变成右图，则需要对 $x,y$ 进行映射，即是 
@@ -415,10 +415,10 @@ $$
 \end{bmatrix}
 $$
 
-至此，我们将坐标从相机空间转换到了裁剪空间，完成了 MVPtransformation 的最后一步 Projection transformation。
+至此，我们将坐标从相机空间转换到了裁剪空间，完成了 MVP Transformation 的最后一步 Projection transformation。
 
 ## 结语 About Application
-在 Unity shader 中，MVPtransformation 步骤并不是要求写者将这些矩阵一一列出来计算，而是给出了内置矩阵变量，只需要调用即可进行使用。
+在 Unity shader 中，MVP Transformation 步骤并不是要求写者将这些矩阵一一列出来计算，而是给出了内置矩阵变量，只需要调用即可进行使用。
 例如 CG 语言中的 UNITY_MATRIX_MVP 。而在 games101 的前置作业中，实现软光栅则是需要将其拆解细究。 \
 故在我目前学习中，常产生一种双向促进。学习图形学底层知识，能让我真正理解写 shader 做效果；想写一些超出现有认知的 shader 效果，那就再学习一些图形学知识。 \
 选择性学习是我现在深有体会的重要感悟，今后我也会写一些 shader 效果的 blog 来促进自己的认知，希望能够达到双向促进的正循环。
