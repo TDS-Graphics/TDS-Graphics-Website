@@ -1,15 +1,24 @@
 ---
-title: 实时环境光遮蔽 GTAO
+title: 高质量实时环境光遮蔽
 authors: [BlueMicro233]
 tags: [cg]
-date: 2026-10-03T22:51
+date: 2026-10-20T22:51
 ---
 
-最近在打 taptap 聚光灯的 gamejam，我在队伍里做一些杂活。今天突然想要把 GTAO (Ground Truth Ambient Occlusion) 技术引进到我们的项目里：
+**NEWS: 我们的力作《提洛之子》即将上线！！！**
 
-![GTAO in Unity](../assets/2026-10-03-GTAO/fig1.png)
+最近在打 taptap 聚光灯的 gamejam，我在小团体里担任了一个有点复杂的角色，做了关卡设计、地编、图形渲染、宣发等，还掺和了一点 3D 美术和特效。 ~（我无疑是个失败的特效。事实上多数特效都是季闲大人做的）~ 我突然想要给我们的游戏整点大的——比如落地一个在 2023 年才发论文的小众环境光遮蔽技术（SSILVB）。
 
-加上最近正好有写作欲，于是写下这篇文章。本文不仅是对 GTAO 技术的阐释，还梳理了整个环境光遮蔽技术的发展脉络和未来走向，希望对你有所帮助。
+我一开始就不想用 unity2022 自带的 SSAO，就自己实现了个 GTAO（SSILVB 是后来才实现的）：
+
+![GTAO in Unity](../assets/2026-10-20-GTAO/fig1.png)
+
+SSILVB 的实现效果（间接光照与 AO）：
+
+![SSILVB in Unity](../assets/2026-10-20-GTAO/ssilvb1.png)
+![SSILVB in Unity](../assets/2026-10-20-GTAO/ssilvb2.png)
+
+加上最近正好有写作欲，于是写下这篇文章。本文不仅是对环境光遮蔽的阐释，还梳理了整个环境光遮蔽技术的发展脉络和未来走向，希望对你有所帮助。
 
 ## 环境光遮蔽简介
 **环境光遮蔽（Ambient Occlusion, AO）** 是什么？简而言之，就是物体之间接触（或者靠得很近）时，会挡住一部分周围的光照，从而产生阴影，就像上图所示。
@@ -19,7 +28,7 @@ date: 2026-10-03T22:51
 但是游戏不一样，尤其是对于移动端设备而言，硬件资源和帧时间预算摆在那里，我们不得不思考优化方法。
 在游戏领域最早是 Crytek 在著名的 ~显卡危机~ [《孤岛危机》(Crysis, 2007)](https://store.steampowered.com/app/17300/Crysis/) 上首次提出 **屏幕空间环境光遮蔽（Screen-Space Ambient Occlusion, SSAO）**，它的思想非常简单，就是在物体表面周围的一个半球/球区域内撒采样点，然后统计哪些点被挡住：
 
-![SSAO in Crytek](../assets/2026-10-03-GTAO/fig2.png)
+![SSAO in Crytek](../assets/2026-10-20-GTAO/fig2.png)
 >红色箭头方向是摄像机看过去的方向，这隐含着判断遮挡需要 Z-Buffer：如果采样点对应的深度值比 Z-Buffer 里记录的更深，就意味着该点被遮挡。
 
 更新一点的环境光遮蔽技术（HBAO, HBAO+, GTAO 等）都是 SSAO 家族的，都基于屏幕空间。除此之外就是基于世界空间的技术，例如基于距离场的 DFAO (Distance Field AO)、基于体素的 VXAO (Voxel AO) 以及光追（RTAO）。
@@ -60,7 +69,7 @@ $$
 
 这里很显而易见了，左侧的 $\frac{\int_{\Omega} V(\omega_i,p) \cos\theta_i \mathrm{d}\omega_i}{\pi}$ 就是从单位半球顶部投影下去的**可视区域面积和总面积的比值**，也即半球空间内的 **平均可见度 $V_{\mathrm{mean}}$** 。如果要找一个 AO 控制因子，那么就没有比它更合适的了。
 
-![Ratio](../assets/2026-10-03-GTAO/hemi_ssao.png)
+![Ratio](../assets/2026-10-20-GTAO/hemi_ssao.png)
 
 不过，为什么是 "$\approx$" ？因为积分中值定理要求函数 $f$ 在积分域上连续，而可见性函数 $V$ 是一个取值在 $\{0,1 \}$ 的阶跃函数，并不严格满足定理的成立条件。但 who cares!  ~数学家 vs 工程师，你们知道吗（~
 
@@ -78,13 +87,13 @@ $$
 
 其中，$\Omega(\mathbf{n})$ 表示以 $\mathbf{n}$ 为朝向的半球，$r_i$ 是采样位置偏移。
 
-![SSAO hemisphere](../assets/2026-10-03-GTAO/fig3.png)
+![SSAO hemisphere](../assets/2026-10-20-GTAO/fig3.png)
 
 将这些采样点投影到屏幕空间，查询对应位置的深度缓冲区，就可以据此判断采样点附近是否存在遮挡几何体（这个过程和 Shadow Mapping 的思想一致），最后做加权平均即可得到 AO 值。
 
 
 ## GTAO: Ground Truth Ambient Occlusion
-本文的重点是 GTAO，它是[动视](https://research.activision.com/publications/archives/practical-real-time-strategies-for-accurate-indirect-occlusion)提出的一个方法。刚刚我们看到，虽然 SSAO 的思想确实是估计 AO 因子 $A(p)$，但是却不那么精确，抛开这个数学背景也很好理解。
+GTAO 是[动视](https://research.activision.com/publications/archives/practical-real-time-strategies-for-accurate-indirect-occlusion)提出的一个算法。刚刚我们看到，虽然 SSAO 的思想确实是估计 AO 因子 $A(p)$，但是却不那么精确，抛开这个数学背景也很好理解。
 
 而 GTAO 则不一样，它的名字就带了个 **"ground truth"**，可以猜出它是一种更硬的方法（事实也的确如此）。
 
@@ -113,3 +122,4 @@ V(\theta,\phi,p)\cos\theta
 
 \end{aligned}
 $$
+
