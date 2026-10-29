@@ -5,7 +5,7 @@ tags: [cg]
 date: 2026-10-20T22:51
 ---
 
-**NEWS: 我们的力作《提洛之子》即将上线！！！**
+**NEWS: 我们的 gamejam 作品 [《提洛之子》](https://www.taptap.cn/app/984250?os=pc) 已上线！！！访问 TapTap 电脑端即可下载试玩！**
 
 最近在打 taptap 聚光灯的 gamejam，我在小团体里担任了一个有点复杂的角色，做了关卡设计、地编、图形渲染、宣发等，还掺和了一点 3D 美术和特效。 ~（我无疑是个失败的特效。事实上多数特效都是季闲大人做的）~ 我突然想要给我们的游戏整点大的——比如落地一个在 2023 年才发论文的小众环境光遮蔽技术（SSILVB）。
 
@@ -97,7 +97,7 @@ GTAO 是[动视](https://research.activision.com/publications/archives/practical
 
 而 GTAO 则不一样，它的名字就带了个 **"ground truth"**，可以猜出它是一种更硬的方法（事实也的确如此）。
 
-> Ground Truth：中文译名为“基准真相”或“基准真值”，在图形学领域有一种 **“渲染的标准答案”** 的意味。例如，我们经常将 Path Tracing 方法的渲染结果作为 ground truth，比较各类实时 GI 算法的差异。~题外话：path tracing 不一定就是对的（它无法模拟波动光学~
+> Ground Truth：中文译名为“基准真相”或“基准真值”，在图形学领域有一种 **“渲染的标准答案”** 的意味。例如，我们经常将 Path Tracing 方法的渲染结果作为 ground truth，比较各类实时 GI 算法的差异。~题外话：path tracing 不一定总是对的（它无法模拟波动光学；并且它处理 $SDS$ 路径也相当困难，这需要光子映射。总之 ground truth 视特定场景而定~
 
 回到 AO 因子的积分式：
 
@@ -123,3 +123,99 @@ V(\theta,\phi,p)\cos\theta
 \end{aligned}
 $$
 
+> 这里其实就是另一种环境光遮蔽技术 **HBAO (Horizon-Based Ambient Occlusion，地平线环境光遮蔽)** 与 GTAO 的分界点。
+>
+> 为了计算方便，HBAO 省去了积分式里的 $\cos$ 项，也就是均匀权重（而非余弦加权），这是一种近似手段。当然这也意味着它 fundamentally 地偏离了 ground truth 的渲染积分。
+
+考虑内层积分：
+
+$$
+\int_{-\pi/2}^{\pi/2}
+V(\theta,\phi,p)\cos\theta
+|\sin\theta| \mathrm{d}\theta
+$$
+
+为了简单，我们需要变换一下参考系。首先我们考虑的是以 $p$ 为原点的局部半球空间，其次我们想要我们的半球方向是以视线为方向而不是以表面法线为方向，于是得到：
+
+$$
+\int_{-\pi/2}^{\pi/2} V(\theta,\phi)\cos(\theta - n) |\sin\theta| \mathrm{d}\theta
+$$
+
+以视线为方向这一点换非常重要：**它使得这个积分可以解析地积出来。** 
+
+> 解析求积分？我想象不到图形学里比这更酷的事情了。完整的渲染积分方程是一个无法解析求解的方程，只能使用数值方法估计，前面提到了。具体可以参见 Kajiya 的 [The Rendering Equation](https://dl.acm.org/doi/10.1145/15886.15902) 论文原文的第三章，方程的解只能展成算子级数，这并没有为实际求解提供帮助。
+
+变换后的半球如下：
+
+![GTAO 半球](../assets/2026-10-20-GTAO/gtaohemi.png)
+
+这里先解释 $h_1, h_2$ 是什么。 $h_1, h_2$ 就是所谓的 horizon（地平角），你可以想象站在一个山谷中间，你所在的点与山顶的连线就是 horizon，而山顶背后的那些起伏都不用管，对你而言它们都被山顶遮挡了。
+
+由于可见度函数的值域仅为 $R_{V} = \{0, 1\}$ ，我们可以把积分域从 $[-2\pi, 2\pi]$ 缩到 $[h_1, h_2]$ （这部分 $V \equiv 1$，显然其余部分为 $0$），于是：
+
+$$
+
+\begin{aligned}
+
+&\int_{-\pi/2}^{\pi/2} V(\theta,\phi)\cos(\theta - n) |\sin\theta| \mathrm{d}\theta \\
+&=\int_{h_1}^{h_2} \cos(\theta - n) |\sin\theta| \mathrm{d}\theta \\
+&=\int_{h_1}^{0} \cos(\theta - n) |\sin\theta| \mathrm{d}\theta + \int_{0}^{h_2} \cos(\theta - n) |\sin\theta| \mathrm{d}\theta \\
+&=- \int_{0}^{h_1} \cos(\theta - n) |\sin\theta| \mathrm{d}\theta + \int_{0}^{h_2} \cos(\theta - n) |\sin\theta| \mathrm{d}\theta 
+
+\end{aligned}
+$$
+
+这里 $h_1 \in [- \frac{\pi}{2}, 0]$， 我们在实际采样两个地平角的时候，当然希望统一当作非负数来处理，于是接下来令 $h_1$ 非负，那么上面式子第一个积分前面的负号也要消去，并且此时 $\sin$ 不可能出现负值，于是得到：
+
+$$
+\int_{0}^{h_1} \cos(\theta - n) \sin\theta \mathrm{d}\theta + \int_{0}^{h_2} \cos(\theta - n) \sin\theta \mathrm{d}\theta
+$$
+
+接下来，进一步解析积分！这里我们只计算第一个积分，因为它们只有积分上限不同，第二个积分的结果换个符号就可以了。
+
+积分里出现了 $\cos(\theta - n) \sin\theta$ 这样的结构，而我们知道积化和差公式是：
+
+$$
+\sin A\cos B
+=\frac{1}{2}[\sin(A+B)+\sin(A-B)]
+$$
+
+于是得到 $\cos(\theta - n) \sin\theta =\frac{1}{2}[\sin(2\theta - n)+\sin(n)]$ ，我们继续积分：
+
+$$
+\begin{aligned}
+
+&\int_{0}^{h_1} \cos(\theta - n) \sin\theta \mathrm{d}\theta \\
+&=\int_{0}^{h_1} \frac{1}{2}[\sin(2\theta - n)+\sin(n)] \mathrm{d}\theta  \\
+&=\frac{1}{2}\int_{0}^{h_1} [\sin(2\theta - n)+\sin(n)] \mathrm{d}\theta  \\
+&=\frac{1}{2}\int_{0}^{h_1} \sin(2\theta - n)\mathrm{d}\theta  + \frac{1}{2}\int_{0}^{h_1} \sin(n) \mathrm{d}\theta  \\
+&=\frac{1}{4}\int_{0}^{h_1} \sin(2\theta - n)\mathrm{d}(2\theta -n) + \frac{1}{2}\int_{0}^{h_1} \sin(n) \mathrm{d}\theta  \\
+&=\frac{1}{4} \bigg[-\cos(2\theta - n)) \bigg]_0^{h_1} + \frac{h_1}{2} \sin(n) \\
+&=\frac{1}{4} \left[\cos n-\cos(2h_1-n)\right] + \frac{h_1}{2} \sin(n) \\
+&=\frac{1}{4} \left[-\cos(2h_1-n) + \cos n + 2h_1 \sin(n) \right] \\
+
+\end{aligned}
+$$
+
+同理可得：
+
+$$
+\begin{aligned}
+
+\int_{0}^{h_2} \cos(\theta - n) \sin\theta \mathrm{d}\theta = \frac{1}{4} \left[-\cos(2h_2-n) + \cos n + 2h_2 \sin(n) \right] \\
+
+\end{aligned}
+$$
+
+综上，
+
+$$
+\begin{aligned}
+
+& \int_{-\pi/2}^{\pi/2} V(\theta,\phi)\cos(\theta - n) |\sin\theta| \mathrm{d}\theta \\
+&= \frac{1}{4} \left[-\cos(2h_1-n) + \cos n + 2h_1 \sin(n) \right] + \frac{1}{4} \left[-\cos(2h_2-n) + \cos n + 2h_2 \sin(n) \right]  \\
+
+\end{aligned}
+$$
+
+内层积分就这么被解析地算出来了。令内层积分等于 
