@@ -117,23 +117,6 @@
   color: #fff;
 }
 
-.heroMeta {
-  display: flex;
-  gap: 1.75rem;
-  margin-top: 4rem;
-  color: #aab6bf;
-  font-size: 0.86rem;
-}
-
-.heroMeta span::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-right: 0.55rem;
-  vertical-align: 0.08rem;
-  background: #f2c14e;
-}
 
 @media screen and (max-width: 996px) {
   .heroBanner {
@@ -168,9 +151,4 @@
     width: 100%;
   }
 
-  .heroMeta {
-    gap: 0.65rem 1.2rem;
-    flex-wrap: wrap;
-    margin-top: 2.75rem;
-  }
 }

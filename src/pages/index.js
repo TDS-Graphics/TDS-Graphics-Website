@@ -40,11 +40,6 @@ function HomepageHeader() {
             开始教程
           </Link>
         </div>
-        <div className={styles.heroMeta} aria-label="站点内容概览">
-          <span>系统路线</span>
-          <span>阶段任务</span>
-          <span>图形实践</span>
-        </div>
       </div>
     </header>
   );
