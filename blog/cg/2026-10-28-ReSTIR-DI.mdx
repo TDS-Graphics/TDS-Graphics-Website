@@ -393,7 +393,7 @@ def reservoir_reuse(prev_frame_reservoirs, image_pixels, n):
 ## 4. BIAS IN MULTI-DISTRIBUTION RIS
 在上文中我们多次提到过 RIS 在处理来自 Reservoir 复用邻居或历史帧时的像素中的样本会破坏 RIS 的无偏性，这主要是因为不同像素的样本是服从不同目标 PDF 而 RIS 要求所有样本服从同一个 PDF。为了解决这个问题 [Lin et al. 2022][^2] 提出了 广义上的 RIS 算法 (GRIS) 使得 RIS 能够处理来自不同 PDF 的样本，但是在本文中我们不会涉及到 GRIS 中的内容 ~才不是因为 Artichoke 在写这文章的时候还没看，哼哼~ ，所以这节只会覆盖 ReSTIR DI [Bitterli et al. 2020][^1] 中分析 RIS 的 biased 和 unbiased 的数学原理。
 
-我们将会先在 Section 4.1 [分析 RIS 权重](4.1-Analyzing-the-RIS-Weight)，再在 Section 4.2 [讨论 biased RIS](4.2-Biased-RIS)，最后在 Section 4.3 给出 [unbiased RIS](4.3-Unbiased-RIS) 
+我们将会先在 Section 4.1 [分析 RIS 权重](#41-analyzing-the-ris-weight)，再在 Section 4.2 [讨论 biased RIS](#42-biased-ris)，最后在 Section 4.3 给出 [unbiased RIS](#43-unbiased-ris)
 
 ### 4.1 Analyzing the RIS Weight
 为了说明 RIS 中 biased 的来源，我们先把 $eq:(6)$ 整理成下面这个样子：
