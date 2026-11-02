@@ -9,7 +9,7 @@ date: 2026-11-02
 
 ## Abstract 
 ### Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting
-使用 Monte Carlo 积分高效渲染来自数百万动态光源的直接光照即使在离线渲染中也是一个极具挑战性的问题。这篇论文介绍了一种新的算法：ReSTIR ，这个算法能在保证可交互性的前提下，高质量的渲染此类光照，并且不需要维护复杂的数据结构。该算法反复对一组候选光照样本进行重采样，并进一步应用空间和时间重采样，以利用来自邻近样本的相关信息。 Bitterli et al. 还给出了这个方法的无偏 Monte Carlo 估计量，并证明了比之前最先进的方法在相同误差下块 6-60 倍，除此之外他们的有偏估计量能更进一步减少噪声，比之前最先进的方法在相同误差下块 35-65 倍，但代价是在几何不连续处出现部分能量损失。他们在 GPU 上实现了该方法，每帧渲染包含多达 340 万个动态发光三角形的复杂场景，同时每个像素最多追踪 8 条射线，耗时不到 50 毫秒。
+使用 Monte Carlo 积分高效渲染来自数百万动态光源的直接光照即使在离线渲染中也是一个极具挑战性的问题。这篇论文介绍了一种新的算法：ReSTIR ，这个算法能在保证可交互性的前提下，高质量的渲染此类光照，并且不需要维护复杂的数据结构。该算法反复对一组候选光照样本进行重采样，并进一步应用空间和时间重采样，以利用来自邻近样本的相关信息。 Bitterli et al. 还给出了这个方法的无偏 Monte Carlo 估计量，并证明了比之前最先进的方法在相同误差下快 6-60 倍，除此之外他们的有偏估计量能更进一步减少噪声，比之前最先进的方法在相同误差下快 35-65 倍，但代价是在几何不连续处出现部分能量损失。他们在 GPU 上实现了该方法，每帧渲染包含多达 340 万个动态发光三角形的复杂场景，同时每个像素最多追踪 8 条射线，耗时不到 50 毫秒。
 
 ### This Blog
 在这篇 Paper Reading Blog 中，将在 Section 1 中介绍在 ReSTIR DI 之前实时光线追踪的一些问题，以及 ReSTIR DI 的大致解决方案，接着在 Section 2 中回顾一下 ReSTIR DI 需要使用的数学前提，然后在 Section 3 中介绍 ReSTIR DI 的具体做法，最后在 Section 4 中介绍 ReSTIR DI 的有偏性，并推导出无偏估计量，~如果有机会写 Section 5 的话我非常乐意使用 [Vulcao](https://github.com/Yang-Junjie/vulcao) 写一个 ReSTIR DI 的 Demo~ .
@@ -17,14 +17,14 @@ date: 2026-11-02
 ## 1. INTRODUCTION
 随着 NVIDIA 在 2018 年发布了支持硬件光追的显卡后，基于 Monte Carlo 的光线追踪方法逐渐应用在实时渲染领域。我们知道传统 Path Tracing 方法中，我们会从像素出发发出很多条Primary Ray，这些 Primary Ray 第一次击中物体后，根据 BSDF 采样产生 Secondary Ray，在场景中不断反弹，在每个反弹点，除了继续采样下一条路径光线外，通常还会用 NEE[^4][^5] 直接向光源连接一条 Shadow Ray 来估计直接光照，若 BSDF 采样在后续存活并且击中光源，则用 MIS[^6][^7] 融合两条途径的贡献，其贡献累加回最初对应的像素。即使是在离线渲染中，使用传统 Path Tracing 方法去渲染具有大量发光物体的直接光照的场景仍然充满挑战。在实时领域那就更加困难重重了，在实时场景中渲染器通常不知道场景将会发生什么变化，通常这种变化来自用户的交互。此外由于实时的时间限制，每个像素通常只能追踪极少数光线。而如果场景中存在数百万动态光源那么朴素 NEE 方法将难以在有限的时间中完成渲染，因此寻找重要光源变得更为关键，有某些方法可以提供辅助光照采样的数据结构，而这些数据结构的构建和更新需要花费大量的时间。  
 
-论文介绍了一种从众多光源中采样单次反弹直接光照的方法，此方法适用于具有完全动态场景的实时光线追踪。该方法建立在 Resampling Importance Sampling [Talbot 2005][^8] 的基础上，对于 Resampling Importance Sampling 的简单介绍可以看 [Artichoke 2026][^9] 对 Reading Importance Resampling for Global Illumination 的 Paper Reading ，此外该方法还使用了一个小型的固定大小的名为 Reservoir 数据结构，它存储了 RIS 接受的样本，此外它还是一个抽样算法/采样算法，通常应用在非图形学领域，对于 Reservoir Sampling 的简单介绍可以看 [Artichoke 2026][^10] 的 Reservoir Sampling 这篇 Blog.
+论文介绍了一种从众多光源中采样单次反弹直接光照的方法，此方法适用于具有完全动态场景的实时光线追踪。该方法建立在 Resampled Importance Sampling [Talbot 2005][^8] 的基础上，对于 Resampled Importance Sampling 的简单介绍可以看 [Artichoke 2026][^9] 对 Reading Importance Resampling for Global Illumination 的 Paper Reading ，此外该方法还使用了一个小型的固定大小的名为 Reservoir 的数据结构，它存储了 RIS 接受的样本，此外它还是一个抽样算法/采样算法，通常应用在非图形学领域，对于 Reservoir Sampling 的简单介绍可以看 [Artichoke 2026][^10] 的 Reservoir Sampling 这篇 Blog.
 
 在拥有 Reservoir 的前提下，该方法不使用任何比固定大小数组更复杂的数据结构，它通过复用来自时间和空间相邻像素的统计信息，以随机、渐进和分层的方式改善了每个像素的直接光照采样 PDF 。与现代实时降噪算法在时间和空间邻域内复用像素颜色不同，该方法可以复用渲染器中使用的采样概率信息，这反过来使得无偏算法成为可能。该方法的无偏模式可以修改为有偏模式，这进一步降低了噪点，代价是在几何不连续处会出现一些过度变暗的现象。
 
-我们将在 Section 2 中回顾一下 ReSTIR DI 需要的数学知识和算法以便更好的学习 ReSTIR DI.
+我们将在 Section 2 中回顾一下 ReSTIR DI 需要的数学知识和算法以便更好地学习 ReSTIR DI.
 
 ## 2. PRELIMINARIES
-在某个 Shading Point $y$ 处沿出射方向 $\vec{\omega}_o$ ，由 Direct Light（直接光）产生的 Radiance（辐射度）$L$，由所有自发光表面 $A$ 的积分给出：
+在某个 Shading Point $y$ 处沿出射方向 $\vec{\omega}_o$ ，由 Direct Light（直接光）产生的 Radiance（辐射亮度）$L$，由所有自发光表面 $A$ 的积分给出：
 $$
 \begin{equation}
 
@@ -36,30 +36,30 @@ $$
 为了简单起见我们将微分面积记为 $\mathrm{d}x$ 并忽视各种方向，设我们的积分为：
 $$
 \begin{equation}
-L = \int_{A}f(x)\mathrm{x},\quad \text{where} \quad f(x) \equiv \rho(x)L_e(x)G(x)V(x)
+L = \int_{A}f(x)\mathrm{d}x,\quad \text{where} \quad f(x) \equiv \rho(x)L_e(x)G(x)V(x)
 \end{equation}
 $$
-### 2.1 Importance Smapling (IS)
+### 2.1 Importance Sampling (IS)
 我们为了求该复杂积分的值，我们使用标准的 Monte Carlo importance sampling estimator:
 $$
 \begin{equation}
 \langle L \rangle_{\text{is}}^{N} = \frac{1}{N} \sum_{i=1}^{N} \frac{f(x_i)}{p(x_i)} \approx L
 \end{equation}
 $$
-表示从 PDF （概率密度函数） $p$ 中采样 $N$ 个样本 $x_i$，再将样本 $x_i$ 带入此公式（IS 估计量）来估算积分 $L$，importance sampling 当 $f(x)$ 不等于 $0$ 时，且 $p(x)$ 大于 $0$ 则 IS 估计量保证 unbiased（无偏），当 $p(x)$ 与 $f(x)$ 相关（可以理解为函数形状类似）时可以降低方差，相关程度越高，方差越小，当 $p(x) \equiv f(x)$ 时方差为 $0$ ，但这是不可能的因为如果我们知道了 $p(x)$ 就没必要进行计算了。
+表示从 PDF （概率密度函数） $p$ 中采样 $N$ 个样本 $x_i$，再将样本 $x_i$ 代入此公式（IS 估计量）来估算积分 $L$，importance sampling 当 $f(x)$ 不等于 $0$ 时，且 $p(x)$ 大于 $0$ 则 IS 估计量保证 unbiased（无偏），当 $p(x)$ 与 $f(x)$ 相关（可以理解为函数形状类似）时可以降低方差，相关程度越高，方差越小，当 $p(x) \equiv f(x)$ 时方差为 $0$ ，但这是不可能的因为如果我们知道了 $p(x)$ 就没必要进行计算了。
 
 ### 2.2 Multiple Importance Sampling (MIS)
 在实践中通常我们有多种采样策略，例如对 BSDF 采样与对光源的采样 (NEE)，而我们需要通过 Multiple Importance Sampling (MIS) [Veach and
-Guibas 1995b][^7] 将不同的策论的采样组合起来，标准的 MIS estimator:
+Guibas 1995b][^7] 将不同策略的采样组合起来，标准的 MIS estimator:
 $$
 \begin{equation}
 \langle L \rangle_{\text{mis}}^{M,N} = \sum_{s=1}^{M} \frac{1}{N_s} \sum_{i=1}^{N_s} w_s(x_i) \frac{f(x_i)}{p_s(x_i)}
 \end{equation}
 $$
-表示给定 $M$ 个采样策略 s 以及对应的 pdf $p_s$，MIS [Veach and Guibas 1995b][^7] 在每种策略 s 中抽取 $N_s$ 个样本，并使用合适的权重 $w_s(x_i)$ 将它们组合成一个加权估计量。只要 $\sum_{s=1}^{M} w_s(x) = 1 $，则 MIS 就是 unbiased 。有关 MIS 可以看看 [Artichoke 2026][^13] 在 Re0-PT 的简单介绍 ~由于写的的确不是很好，Artichoke 都不太敢在这里引用，你们还是看 Vench 的原论文或者去互联网上看看更好的文章~ 。  
+表示给定 $M$ 个采样策略 s 以及对应的 pdf $p_s$，MIS [Veach and Guibas 1995b][^7] 在每种策略 s 中抽取 $N_s$ 个样本，并使用合适的权重 $w_s(x_i)$ 将它们组合成一个加权估计量。只要 $\sum_{s=1}^{M} w_s(x) = 1 $，则 MIS 就是 unbiased 。有关 MIS 可以看看 [Artichoke 2026][^13] 在 Re0-PT 的简单介绍 ~由于写得的确不是很好，Artichoke 都不太敢在这里引用，你们还是看 Veach 的原论文或者去互联网上看看更好的文章~ 。  
 
 ### 2.3 Resampled Importance Sampling (RIS)
-Resampled Importance Sampling (RIS) [Talbot 2005][^8] 是一种与 MIS 不同的方法，可以看 [Artichoke 2026][^12] 关于 RIS 的简单介绍。RIS 先从一个简单的 pdf/源分布 $p$ 中生产 $M \ge 1$ 个候选样本 $\mathbf{x} = \{ x_1,x_2,\dots,x_M \}$，该 pdf ($p$) 与 $f(x)$ 的相关性较差，但是非常易于采样，随后我们为这 $M$ 个候选样本附加对应的权重 $\mathbf{w}(x)$，然后依据每个样本的权重计算每个样本的归一化概率 $p(z \mid \mathbf{x})$，然后根据这些离散的归一化概率随机选择一个索引 $z \in \{1, \dots, M\}$ 该索引对应候选样本池中的样本就是最终抽取到的样本。  
+Resampled Importance Sampling (RIS) [Talbot 2005][^8] 是一种与 MIS 不同的方法，可以看 [Artichoke 2026][^12] 关于 RIS 的简单介绍。RIS 先从一个简单的 pdf/源分布 $p$ 中生成 $M \ge 1$ 个候选样本 $\mathbf{x} = \{ x_1,x_2,\dots,x_M \}$，该 pdf ($p$) 与 $f(x)$ 的相关性较差，但是非常易于采样，随后我们为这 $M$ 个候选样本附加对应的权重 $\mathbf{w}(x)$，然后依据每个样本的权重计算每个样本的归一化概率 $p(z \mid \mathbf{x})$，然后根据这些离散的归一化概率随机选择一个索引 $z \in \{1, \dots, M\}$ 该索引对应候选样本池中的样本就是最终抽取到的样本。  
 
 $$
 \begin{equation}
@@ -67,7 +67,7 @@ p(z \mid \mathbf{x}) = \frac{\mathbf{w}(x_z)}{\sum_{i=1}^{M} \mathbf{w}(x_i)} \q
 \end{equation}
 $$
 
-其中 $\hat{p}(x)$ 是目标 pdf ，即那个在文章一开始我们提到的 pdf，通常该目标分布 $\hat{p}(x)$ 相比源分布 $p(x)$ 复杂，不好被采样，没有实际的采样算法，我们设 $y = x_z$ 表示最终被选在候选样本池中被选中的样本，则采样单个样本的 RIS estimator:  
+其中 $\hat{p}(x)$ 是目标 pdf ，即那个在文章一开始我们提到的 pdf，通常该目标分布 $\hat{p}(x)$ 相比源分布 $p(x)$ 复杂，不好被采样，没有实际的采样算法，我们设 $y = x_z$ 表示最终从候选样本池中被选中的样本，则采样单个样本的 RIS estimator:  
 
 $$
 \begin{equation}
@@ -157,7 +157,7 @@ def ris_estimator(M, target_pdf_func, source_pdf_func, f_func):
 
 上面我们提到的 RIS 假设了单一的源PDF $p$，但是在实际中通常我们有多种采样策略，这需要 RIS 与 MIS 进行结合。幸运的是 [Talbot 2005][^8] 展示了如何进行这种操作。不幸的是，这种形式的 MIS 的成本太高。而此论文给出了一种通过空间和时间重用，使用不同的源 PDF 和积分域来大幅增加候选样本数量的方式使用 RIS。  
 
-由于传统的 RIS 要求样本是 i.i.d. （独立同分布）的，即每个像素中的每条光线，在物体表面挑选采样点时是各自独立生成的；并且对于某一条光线，所有被采样出来的候选样本都是由同一个 PDF 抽样出来的。而在后续 Section 3 中我们会详细介绍 ReSTIR DI 的做法，而其中的 时空复用 会打破 RIS 要求的 i.i.d. 导致最终的估计量是 biased 的，在 Section 4 我们我们会分析其 biased 并给出 unbiased 的估计量，而更规范更标准的无偏的应用于 ReSTIR 的 RIS 在 GRIS (Generalized Resampled Importance Sampling) [Lin et al. 2022][^2] 论文中给出，GRIS 是建立坚实的 ReSTIR 的数学基础，将传统的 RIS 理论进行了推广，允许在不同分布的、相关的样本之间进行重采样。但这不在本文的讨论范围内。  
+由于传统的 RIS 要求样本是 i.i.d. （独立同分布）的，即每个像素中的每条光线，在物体表面挑选采样点时是各自独立生成的；并且对于某一条光线，所有被采样出来的候选样本都是由同一个 PDF 抽样出来的。而在后续 Section 3 中我们会详细介绍 ReSTIR DI 的做法，而其中的 时空复用 会打破 RIS 要求的 i.i.d. 导致最终的估计量是 biased 的，在 Section 4 我们会分析其 biased 并给出 unbiased 的估计量，而更规范更标准的无偏的应用于 ReSTIR 的 RIS 在 GRIS (Generalized Resampled Importance Sampling) [Lin et al. 2022][^2] 论文中给出，GRIS 为 ReSTIR 建立了坚实的数学基础，将传统的 RIS 理论进行了推广，允许在不同分布的、相关的样本之间进行重采样。但这不在本文的讨论范围内。  
 
 ### 2.4 Weighted Reservoir Sampling (WRS)
 Weighted reservoir sampling 是一类算法，有关 WRS 的简单介绍可以看看 [Artichoke 2026][^14] 的简单介绍。WRS 是一种采样算法，若给定数量未知或数量极其庞大的样本 $\{ x_1,x_2,x_3, \dots \}$ ，并且每个样本都有一个对应的权重 $\mathbf{w}(x_i)$，WRS 能保证每个元素被抽中的概率与其权重成正比。WRS 会使用一个名为 Reservoir 的容器，将一些候选样本暂时存放在这个容器中，这个容器的作用非常符合它的名字 “蓄水池”，在 ReSTIR 中我们只需要大小为 $1$ 的 Reservoir，那么某个样本 $x_i$ 被选中的概率就是：  
@@ -168,8 +168,8 @@ P_i = \frac{w(x_i)}{\sum_{j=1}^{M} w(x_j)}
 \end{equation}
 $$
 
-Reservoir Sampling 对每个元素仅处理一次，它是一种流式算法，数据流的长度 $M$ 无需预先知晓，所以可以处理数量未知或数量极其庞大的样本。ReSTIR DI 中使用的是由 [Chao. 1982][^13] 给出的 WRS 算法。具体的算法步骤可以看 TDSG 中 [Artichoke 2026][^14] 对此的简单介绍，或者看原论文 [Bitterli et al. 2020][^1].
-我们在算法 2 中展示了基于 [Chao. 1982][^13] 的 WRS Python 代码。  
+Reservoir Sampling 对每个元素仅处理一次，它是一种流式算法，数据流的长度 $M$ 无需预先知晓，所以可以处理数量未知或数量极其庞大的样本。ReSTIR DI 中使用的是由 [Chao. 1982][^15] 给出的 WRS 算法。具体的算法步骤可以看 TDSG 中 [Artichoke 2026][^14] 对此的简单介绍，或者看原论文 [Bitterli et al. 2020][^1].
+我们在算法 2 中展示了基于 [Chao. 1982][^15] 的 WRS Python 代码。  
 
 ```python
 # 算法 2: Weighted Reservoir Sampling (WRS)
@@ -211,10 +211,10 @@ def reservoir_sampling(stream_samples, stream_weights):
 ```
 
 ## 3 ReSTIR DI (STREAMING RIS WITH SPATIOTEMPORAL REUSE)
-在本节中我们将正式开始介绍 ReSTIR DI ，我们会先在 3.1 中介绍将 RIS 与 WRS 结合的后的流式算法，随后我们会在 3.2 节介绍如何合并多个 Reservoir 这是 ReSTIR 时空重用的基础，在 3.3 节我们介绍完整的 ReSITR DI 算法。不幸的是，依照现有的朴素方法是 biased 的，就像我们上文说的，由于时空重用打破了 RIS 的 i.i.d. 邻居样本或上一帧样本的 BSDF 不同打破了同分布，并且样本依赖于其他样本打破了独立性。这导致结果图在几何不连续处的能量损失。在后续的 Section 4 中我们会给出 unbiased 简单的推导。  
+在本节中我们将正式开始介绍 ReSTIR DI ，我们会先在 3.1 中介绍将 RIS 与 WRS 结合后的流式算法，随后我们会在 3.2 节介绍如何合并多个 Reservoir 这是 ReSTIR 时空重用的基础，在 3.6 节我们介绍完整的 ReSTIR DI 算法。不幸的是，依照现有的朴素方法是 biased 的，就像我们上文说的，由于时空重用打破了 RIS 的 i.i.d. 邻居样本或上一帧样本的 BSDF 不同打破了同分布，并且样本依赖于其他样本打破了独立性。这导致结果图在几何不连续处的能量损失。在后续的 Section 4 中我们会给出 unbiased 简单的推导。  
 
 ### 3.1 Streaming RIS using reservoir sampling
-原论文并没有给出具体将两个算法 (RIS & WRS) 结合的具体过程，直接给出了算法，我们先给出 算法 3 的 python 实现，后让 Artichoke 尝试解释一下。  
+原论文并没有给出具体将两个算法 (RIS & WRS) 结合的具体过程，直接给出了算法，我们先给出 算法 3 的 Python 实现，然后让 Artichoke 尝试解释一下。  
 ``` python
 # 算法 3：Streaming RIS using reservoir sampling
 import random
@@ -263,12 +263,12 @@ def render_image(image_pixels):
         
     return image_pixels
 ``` 
-RIS 的步骤是依照源 PDF $p$ 采样 $M$ 候选个样本 $x_i$，并为每个样本 $x_i$ 赋予权重 $\mathbf{w}(x_i) = \frac{\hat{p}(x_i)}{p(x_i)}$，在依照权重对这些候选样本进行重采样，但是重采样的方法并没有规定，所以我们可以用 WRS 对这 $M$ 个候选样本进行重采样。就这样 RIS 和 WRS 简单的结合在了一起。  
+RIS 的步骤是依照源 PDF $p$ 采样 $M$ 个候选样本 $x_i$，并为每个样本 $x_i$ 赋予权重 $\mathbf{w}(x_i) = \frac{\hat{p}(x_i)}{p(x_i)}$，再依照权重对这些候选样本进行重采样，但是重采样的方法并没有规定，所以我们可以用 WRS 对这 $M$ 个候选样本进行重采样。就这样 RIS 和 WRS 简单地结合在了一起。  
 
 ### 3.2 Combining the streams of multiple reservoirs
-[Bitterli et al. 2020][^1] 注意到，相邻像素的目标 PDF 之间通常存在着显著的相关性，即“长的很像”。那么我们可以使用 Reservoir Sampling 的一个关键特性来利用这像素之间相关性，该特性允许我们在不访问其输入流的情况下合并多个 Reservoir。一个 Reservoir 的状态包括当前选择的样本 $y$ 以及迄今为止所有候选样本的权重之和 $ \mathbf{w}_{sum}$，那么我们为了合并多个 Reservoir 可以把每个 Reservoir 的 $y$ 视为一个新的样本，它的对应的权重是 $\mathbf{w}_{sum}$ ，将这些 $y$ 组成一个候选样本集，并使用类似 算法 3 的做法，流式处理这些新的由 Reservoir 中样本组成的候选样本。  
+[Bitterli et al. 2020][^1] 注意到，相邻像素的目标 PDF 之间通常存在着显著的相关性，即“长得很像”。那么我们可以使用 Reservoir Sampling 的一个关键特性来利用这些像素之间的相关性，该特性允许我们在不访问其输入流的情况下合并多个 Reservoir。一个 Reservoir 的状态包括当前选择的样本 $y$ 以及迄今为止所有候选样本的权重之和 $ \mathbf{w}_{sum}$，那么我们为了合并多个 Reservoir 可以把每个 Reservoir 的 $y$ 视为一个新的样本，它的对应的权重是 $\mathbf{w}_{sum}$ ，将这些 $y$ 组成一个候选样本集，并使用类似 算法 3 的做法，流式处理这些新的由 Reservoir 中样本组成的候选样本。  
 
-需要考虑的是这些新样本的权重 $\mathbf{w}_{sum}$ 并不能直接用于重采样，考虑到来自相邻像素 $q^{\prime}$ 的样本是服从于与像素 $q$ 样本不同的目标分布 $\hat{p}_{q^{\prime}}$，根据测度论中的测度变换/重要性权重的修正，我们需要使用 $\frac{\hat{p}_q(r.y)}{\hat{p}_{q^{\prime}}(r.y)}$ 对 $q^{\prime}$ 的权重 $\mathbf{w}_{sum}$ 进行调整，以补偿在相邻像素处相比当前像素被过度或欠采样的区域将样本从邻居像素的目标分布校正到当前像素的目标分布 [Bitterli et al. 2020][^1] 。再乘以新样本的权重 $\mathbf{w}_{sum}$ 可以得到 $\hat{p}_q(r.y) / \hat{p}_{q^{\prime}}(r.y) \cdot r.w_{\text{sum}}$ 为了化简公式我们可以联立 $eq:(6)$ 的一部分 或 算法 3 中的第 33 行 $r.W = \frac{1}{\hat{p}_q(s.y)}(\frac{1}{s.M} \cdot s.\mathbf{w}_{sum})$ 可得最终用于重采样的权重为 $\hat{p}_q(r.y) \cdot r.W \cdot r.M$ [Bitterli et al. 2020][^1] 。我们在 算法 4 中展示了合并 $k$ 个 Reservoir 的 python 代码。  
+需要考虑的是这些新样本的权重 $\mathbf{w}_{sum}$ 并不能直接用于重采样，考虑到来自相邻像素 $q^{\prime}$ 的样本是服从于与像素 $q$ 样本不同的目标分布 $\hat{p}_{q^{\prime}}$，根据测度论中的测度变换/重要性权重的修正，我们需要使用 $\frac{\hat{p}_q(r.y)}{\hat{p}_{q^{\prime}}(r.y)}$ 对 $q^{\prime}$ 的权重 $\mathbf{w}_{sum}$ 进行调整，以补偿在相邻像素处相比当前像素被过度或欠采样的区域将样本从邻居像素的目标分布校正到当前像素的目标分布 [Bitterli et al. 2020][^1] 。再乘以新样本的权重 $\mathbf{w}_{sum}$ 可以得到 $\hat{p}_q(r.y) / \hat{p}_{q^{\prime}}(r.y) \cdot r.w_{\text{sum}}$ 为了化简公式我们可以联立 $eq:(6)$ 的一部分 或 算法 3 中的第 33 行 $r.W = \frac{1}{\hat{p}_q(s.y)}(\frac{1}{s.M} \cdot s.\mathbf{w}_{sum})$ 可得最终用于重采样的权重为 $\hat{p}_q(r.y) \cdot r.W \cdot r.M$ [Bitterli et al. 2020][^1] 。我们在 算法 4 中展示了合并 $k$ 个 Reservoir 的 Python 代码。  
 
 ```python
 # 算法 4: Combining the streams of multiple reservoirs
@@ -304,9 +304,9 @@ def combine_reservoirs(q, reservoirs_list):
 ```
 
 ### 3.3 Spatial Reuse
-Reservoir Sampling 的可合并性使得在 RIS 中实现一种实用的计算复用算法成为可能 [Bitterli et al. 2020][^1] 。具体第一步是先使用 RIS 为每个像素 $q$ 生成 $M$ 个候选样本，并将得到的 Reservoir 存放在和图片尺寸一致的 Buffer 中，第二步，我们使用某种方法选择像素 $p$ 周围的 $k$ 个邻居（这些邻居已经被存放在 Buffer）Reservoir 并利用算法 4 将 $k$ 个邻居 Reservoir 合并到像素 $q$ 的 Reservoir 上并再次写入 Buffer。如下图，展示了 [Bitterli et al. 2020][^1] 对 Spatial Reuse 分别进行 0,1,2,4 次的结果。
+Reservoir Sampling 的可合并性使得在 RIS 中实现一种实用的计算复用算法成为可能 [Bitterli et al. 2020][^1] 。具体第一步是先使用 RIS 为每个像素 $q$ 生成 $M$ 个候选样本，并将得到的 Reservoir 存放在和图片尺寸一致的 Buffer 中，第二步，我们使用某种方法选择像素 $q$ 周围的 $k$ 个邻居（这些邻居已经被存放在 Buffer）Reservoir 并利用算法 4 将 $k$ 个邻居 Reservoir 合并到像素 $q$ 的 Reservoir 上并再次写入 Buffer。如下图，展示了 [Bitterli et al. 2020][^1] 对 Spatial Reuse 分别进行 0,1,2,4 次的结果。
 ![Fig.1.](../assets/2026-10-28-ReSTIR-DI/1.png)
-显而易见的，我们可以对第二步进行多次以得到更好的渲染结果。进行一次的总时间复杂度是 $O(K+M)$ ，进行 $n$ 次的时间复杂度是 $O(nk+M)$ 但每个像素实际上能获得 $k^n \cdot M$ 个候选样本，这得到的提升是非常显著的。但是这种收益并非无限；最终，迭代复用会纳入附近像素的所有候选样本，图像质量便会停止提升 [Bitterli et al. 2020][^1]  。
+显而易见的，我们可以对第二步进行多次以得到更好的渲染结果。进行一次的总时间复杂度是 $O(k+M)$ ，进行 $n$ 次的时间复杂度是 $O(nk+M)$ 但每个像素实际上能获得 $k^n \cdot M$ 个候选样本，这得到的提升是非常显著的。但是这种收益并非无限；最终，迭代复用会纳入附近像素的所有候选样本，图像质量便会停止提升 [Bitterli et al. 2020][^1]  。
 
 ### 3.4 Temporal Reuse
 虽然 ReSTIR 也能用于渲染静态图片，但是主要战场还是在实时动画序列中。在这种情况下图像通常不是孤立的，前一帧可以提供额外的候选样本用于复用。渲染完某一帧后我们可以存储该帧每个像素最终的 Reservoir 以便在下一帧中复用。随着时间的推移，新的一帧不断复用/合并前一帧的样本，最新的一帧不仅仅只是复用了上一帧的样本，因为如果前一帧复用了前前一帧的样本，那么最新一帧则相当于合并序列中所有先前帧的候选样本，这极大地提高了图像质量。下图展示了 [Bitterli et al. 2020][^1] 比较仅 Spatial Reuse 与 spatiotemporal reuse 的效果。
@@ -314,12 +314,12 @@ Reservoir Sampling 的可合并性使得在 RIS 中实现一种实用的计算�
 ![Fig.2.](../assets/2026-10-28-ReSTIR-DI/2.png)
 
 ### 3.5 Visibility Reuse
-虽然我们看似已经能得到一个很好的结果了是吧，“啊那只要我的 $M$ 足够大，候选样本足够多，重用次数足够多，随着时间的推进，我们是不是能得到一个好的结果？”。不幸的是，在目前即使拥有无限的候选样本，尽管随着 $M$ 趋向于无穷我们也不能得到一个好的结果，样本的分布会逼近我们的目标概率密度函数 $\hat{p}$ ，但是在实践中，通常 $\hat{p}$ 被选择为一个不能完美地采样 $f(x)$ 的 PDF（通常我们会将 $\hat{p}$  设置成 $\rho(x)L_e(x)G(x)$），这是由于 Visibility 项导致的。这意味随着 $M$ 增大由 $V$ 项导致的噪声无法被处理。  
+虽然我们看似已经能得到一个很好的结果了是吧，“啊那只要我的 $M$ 足够大，候选样本足够多，重用次数足够多，随着时间的推进，我们是不是能得到一个好的结果？”。不幸的是，在目前即使拥有无限的候选样本，尽管随着 $M$ 趋向于无穷我们也不能得到一个好的结果，样本的分布会逼近我们的目标概率密度函数 $\hat{p}$ ，但是在实践中，通常 $\hat{p}$ 被选择为一个不能完美地采样 $f(x)$ 的 PDF（通常我们会将 $\hat{p}$  设置成 $\rho(x)L_e(x)G(x)$），这是由于 Visibility 项导致的。这意味着随着 $M$ 增大由 $V$ 项导致的噪声无法被处理。  
 
 为了解决这个问题 [Bitterli et al. 2020][^1] 使用了 Visibility Reuse （可见性复用）在进行空间或时间复用之前，我们会判断每个像素 Reservoir 中所选样本 y 的可见性。如果 y 被遮挡，我们就丢弃该 Reservoir 。这意味着被遮挡的样本不会传播到相邻像素，并且如果可见性在局部是连贯的，那么通过空间重采样产生的最终样本很可能不会被遮挡。
 
 ### 3.6 Complete ReSTIR DI Algorithm
-算法 5 给出了完整的 Reservoir python 代码。
+算法 5 给出了完整的 ReSTIR DI Python 代码。
 
 ```python
 
@@ -434,7 +434,7 @@ $$
 p(\mathbf{x}, z) = p(\mathbf{x})p(z \mid \mathbf{x}) = \left[ \prod_{i=1}^{M} p_i(x_i) \right] \frac{w_z(x_z)}{\sum_{i=1}^{M} w_i(x_i)}
 \end{equation}
 $$
-这距离我们得到我们的目标 $p(y)$ 就差最后一步了，即利用 $p(z \mid \mathbf{x})$ 计算边缘概率，我们在本科阶段都学过。不过他的求解方式需要解释一下，对于 $p(y)$ 来说可能会存在多组 $\{ \mathbf{x} ,z \}$ 使得 RIS 返回 $y$。还记得我们在本科阶段求边缘概率密度得情景吗？如果是连续概率密度，我们只会对非零得区域进行积分。而在候选样本集中某些样本并不会对结果产生贡献，也就是"0"，所以根据原论文 [Bitterli et al. 2020][^1] 我们可以定义一个集合 $Z(y)$ 表示所有对 $y$ 有贡献的样本：
+这距离我们得到我们的目标 $p(y)$ 就差最后一步了，即利用 $p(z \mid \mathbf{x})$ 计算边缘概率，我们在本科阶段都学过。不过它的求解方式需要解释一下，对于 $p(y)$ 来说可能会存在多组 $\{ \mathbf{x} ,z \}$ 使得 RIS 返回 $y$。还记得我们在本科阶段求边缘概率密度的情景吗？如果是连续概率密度，我们只会对非零的区域进行积分。而在候选样本集中某些样本并不会对结果产生贡献，也就是"0"，所以根据原论文 [Bitterli et al. 2020][^1] 我们可以定义一个集合 $Z(y)$ 表示所有对 $y$ 有贡献的样本：
 $$
 \begin{equation}
 Z(y) = \{ i \mid 1 \le i \le M \land p_i(y) > 0 \}
@@ -450,9 +450,9 @@ $$
 
 其中 $\mathbf{x}^{i \to y} = \{x_1, \dots, x_{i-1}, y, x_{i+1}, \dots, x_M\}$，其中第 $i$ 个候选被固定为 $y$ 积分仅对未固定的 $M-1$ 个候选进行。
 
-> 为了让读者不那么疑惑，Artichoke 打算说清楚 $p(z \mid \mathbf{x})$、$p(y)$、$p(\mathbf{x})$、$p(\mathbf{x}, z)$ 分别表示的含义。$p(\mathbf{x})$ 表示的是恰好生成某组候选样本集 $\mathbf{x}$ 的概率密度；$p(z \mid \mathbf{x})$ 表示的是在给定某个候选样本集 $\mathbf{x}$ 的情况下从中抽到 $x_z$ 的离散概率分布；$p(\mathbf{x}, z)$ 表示第一步我们生成 $\mathbf{x}$ 的基础上第二步抽到 $x_z$ 的概率密度；$p(y)$ 表示无论间经历了怎样的过程和路径，最终得到 $y$ 的概率密度；这其中也许有些人忘记了为什么需要使用联合概率密度 $p(\mathbf{x}, z)$ 求边缘概率密度 $p(y)$，这看似很奇怪一个无中间状态无关的量居然是从中间状态中求出来，但如果我们看看他的求解方式，是通过求和积分，也就是把所有的中间状态穷举加起来（全概率公式）是不是就变得没那么困惑了呢。
+> 为了让读者不那么疑惑，Artichoke 打算说清楚 $p(z \mid \mathbf{x})$、$p(y)$、$p(\mathbf{x})$、$p(\mathbf{x}, z)$ 分别表示的含义。$p(\mathbf{x})$ 表示的是恰好生成某组候选样本集 $\mathbf{x}$ 的概率密度；$p(z \mid \mathbf{x})$ 表示的是在给定某个候选样本集 $\mathbf{x}$ 的情况下从中抽到 $x_z$ 的离散概率分布；$p(\mathbf{x}, z)$ 表示第一步我们生成 $\mathbf{x}$ 的基础上第二步抽到 $x_z$ 的概率密度；$p(y)$ 表示无论经历了怎样的过程和路径，最终得到 $y$ 的概率密度；这其中也许有些人忘记了为什么需要使用联合概率密度 $p(\mathbf{x}, z)$ 求边缘概率密度 $p(y)$，这看似很奇怪一个与中间状态无关的量居然是从中间状态中求出来，但如果我们看看它的求解方式，是通过求和积分，也就是把所有的中间状态穷举加起来（全概率公式）是不是就变得没那么困惑了呢。
 
-现在有的我们都有了，我们可以计算 $W(\mathbf{x}, \mathbf{z})$ 的条件期望了。在连续情形下，条件期望的定义是：
+现在该有的我们都有了，我们可以计算 $W(\mathbf{x}, \mathbf{z})$ 的条件期望了。在连续情形下，条件期望的定义是：
 $$
 \begin{equation}
 \mathbb{E}[W(\mathbf{x}, z) \mid x_z = y] = \int W(\mathbf{x}, z) \cdot p(\mathbf{x},z \mid x_z = y) \,\mathrm{d}\mathbf{x}
@@ -485,7 +485,7 @@ p(\mathbf{x}^{i \rightarrow y}, i) = \left[ \prod_{k=1}^M p_k(x_k) \right] \cdot
 \end{equation} 
 $$
 
-啊这不就我们那个又臭又长的积分里面的项吗，啊，让 Artichoke 吧你们带入进去看看会发生什么吧！
+啊这不就我们那个又臭又长的积分里面的项吗，啊，让 Artichoke 把它们代入进去看看会发生什么吧！
 $$
 \begin{equation}
 \mathbb{E}[W(\mathbf{x}, z)\mid x_z = y] = \sum_{i \in Z(y)} \frac{\int \cdots \int  \frac{1}{\hat{p}(y)} \cdot \frac{1}{M}  \cancel{\sum_{j=1}^M w_j(x_j)}  \cdot  \prod_{k=1}^M p_k(x_k) \cdot \frac{w_i(y)}{\cancel{\sum_{j=1}^M w_j(x_j)}} \, \mathrm{d}x_1 \dots \mathrm{d}x_M}{p(y)}
@@ -515,7 +515,7 @@ $$
 \mathbb{E}[W(\mathbf{x}, z)\mid x_z = y] = \sum_{i \in Z(y)} \frac{\frac{1}{\hat{p}(y)M} \cdot w_i(y) \cdot p_i(y)}{p(y)}
 \end{equation} 
 $$
-我们又知道 RIS 中 $w_i(y) = \hat{p}(y) / p_i(y)$ ，带入得到：   
+我们又知道 RIS 中 $w_i(y) = \hat{p}(y) / p_i(y)$ ，代入得到：   
 $$
 \begin{equation}
 \mathbb{E}[W(\mathbf{x}, z)\mid x_z = y] =  \frac{\frac{1}{\hat{p}(y)M} \cdot\sum_{i \in Z(y)} \hat{p}(y)}{p(y)}
@@ -549,7 +549,7 @@ $$
 $$
 这表明，要构建一个无偏估计量，只需要满足 $\sum_{i \in Z(y)} m(x_i) = 1$。
 
-选择 $m(x)$ 的方式有无限多种。[Bitterli et al. 2020][^1] 给出了一种朴素方法使用均匀权重，直接设 $m(x_z) = 1/\vert{}Z(x_z)\vert{}$。也就是说，我们不再除以 $M$（候选数量），而是除以在该位置 PDF 非零的候选数量，从而构建出一个无偏的 RIS 估计量。这解决了偏差问题，但是这种逆 PDF 估计量可能会带来别的问题。考虑一个候选 PDF 接近于零但并不严格为零的情况，这使得是原始的 RIS 估计量也是无偏的。然而，估计量会变得极其嘈杂（噪声极大）。
+选择 $m(x)$ 的方式有无限多种。[Bitterli et al. 2020][^1] 给出了一种朴素方法使用均匀权重，直接设 $m(x_z) = 1/\vert{}Z(x_z)\vert{}$。也就是说，我们不再除以 $M$（候选数量），而是除以在该位置 PDF 非零的候选数量，从而构建出一个无偏的 RIS 估计量。这解决了偏差问题，但是这种逆 PDF 估计量可能会带来别的问题。考虑一个候选 PDF 接近于零但并不严格为零的情况，这使得原始的 RIS 估计量也是无偏的。然而，估计量会变得极其嘈杂（噪声极大）。
 
 [Bitterli et al. 2020][^1] 还给出了一个结合 MIS 的方法：可以选择任意相加为 1 的权重 $m(x_z)$，例如
 $$
@@ -560,7 +560,7 @@ $$
 即候选 PDF 的平衡启发式（balance heuristic）。当使用 RIS 结合多个候选 PDF 时，这同时解决了偏差和噪声问题。
 
 
-现在我们能实现无偏的 Reservoir 合并，下面我们给出使用均匀权重的无偏的 Reservoir 合并（MIS 版本类似） python 代码：
+现在我们能实现无偏的 Reservoir 合并，下面我们给出使用均匀权重的无偏的 Reservoir 合并（MIS 版本类似） Python 代码：
 ```python
 # 算法 6: Unbiased combination of multiple reservoirs
 def combine_reservoirs_unbiased(q, r_list, q_list):
@@ -596,7 +596,7 @@ def combine_reservoirs_unbiased(q, r_list, q_list):
 ```
 
 ## End
-啊经过半周左右的时间，这篇文章也进入尾声了。通过写 Blog 的学习方式与直接仅仅看原文获得的收获是完全不一样的，写 Blog 这种学习方式使得我不得不把其中的细节搞清楚，我得为读这篇文章的读者负责，尽管写作水平还有待提高，但我依然已经算是完成了。其实开头我也说过这篇文章是我为了自己学习 ReSTIR DI 而写的，写 Blog 算是一种附属品，当然这也符合这篇 Blog 的类比 [paper reading]。收获最大的其实就是 ReSTIR 这个算法了，以及其中的数学，并且这也让我看到的自己还有哪些知识需要补充，比如测度论、概率论基础等等。不足的地方就是 Section 5 还没写，原论文后半部分的应用也没写，但其实原论文后半部分的应用相关的没有很高的复杂度，我就不带着大家读了。
+啊经过半周左右的时间，这篇文章也进入尾声了。通过写 Blog 的学习方式与直接仅仅看原文获得的收获是完全不一样的，写 Blog 这种学习方式使得我不得不把其中的细节搞清楚，我得为读这篇文章的读者负责，尽管写作水平还有待提高，但我依然已经算是完成了。其实开头我也说过这篇文章是我为了自己学习 ReSTIR DI 而写的，写 Blog 算是一种附属品，当然这也符合这篇 Blog 的类型 [paper reading]。收获最大的其实就是 ReSTIR 这个算法了，以及其中的数学，并且这也让我看到了自己还有哪些知识需要补充，比如测度论、概率论基础等等。不足的地方就是 Section 5 还没写，原论文后半部分的应用也没写，但其实原论文后半部分的应用相关的没有很高的复杂度，我就不带着大家读了。
 
 
 [^1]:[Bitterli, B., Wyman, C., Pharr, M., Shirley, P., Lefohn, A., & Jarosz, W. (2020). Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting.](https://dl.acm.org/doi/10.1145/3386569.3392481)
