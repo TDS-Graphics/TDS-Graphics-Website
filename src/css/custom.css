@@ -40,3 +40,77 @@
 .navbar {
   border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
+
+/* Keep the site footer below the first viewport, even on short pages. */
+.main-wrapper {
+  min-height: calc(100vh - var(--ifm-navbar-height));
+  min-height: calc(100dvh - var(--ifm-navbar-height));
+}
+
+.theme-layout-footer {
+  --ifm-footer-background-color: var(--ifm-color-emphasis-100);
+  --ifm-footer-color: var(--ifm-color-emphasis-700);
+  --ifm-footer-link-color: var(--ifm-color-emphasis-800);
+  --ifm-footer-title-color: var(--ifm-font-color-base);
+  --ifm-footer-padding-vertical: 2rem;
+  --ifm-footer-padding-horizontal: 1.5rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.theme-layout-footer .footer__links {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 1.5rem 3rem;
+  margin: 0 0 1.5rem;
+}
+
+.theme-layout-footer .footer__col {
+  min-width: 0;
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.theme-layout-footer .footer__title {
+  margin-bottom: 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.theme-layout-footer .footer__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.2rem;
+}
+
+.theme-layout-footer .footer__link-item {
+  display: inline-block;
+  padding: 0.15rem 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-underline-offset: 3px;
+}
+
+.theme-layout-footer .footer__link-item:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 4px;
+}
+
+.theme-layout-footer .footer__bottom {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  text-align: left;
+}
+
+.theme-layout-footer .footer__copyright {
+  font-size: 0.8125rem;
+  line-height: 1.8;
+}
+
+@media screen and (max-width: 767px) {
+  .theme-layout-footer .footer__links {
+    grid-template-columns: 1fr;
+  }
+}
