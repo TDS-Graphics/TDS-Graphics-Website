@@ -7,7 +7,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: min(760px, calc(100vh - var(--ifm-navbar-height)));
+  min-height: calc(100vh - var(--ifm-navbar-height));
   display: flex;
   align-items: center;
   color: #f7fafc;
