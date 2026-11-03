@@ -24,13 +24,32 @@
 
 `.md` 支持 Markdown，`.mdx` 还支持 JSX 和导入组件。两种格式都支持本站现有的代码高亮和数学公式。
 
-图片可以放在本目录的 `assets/<作者 ID>/` 下，并使用相对路径引用：
+也可以链接到其他成员的个人页，例如 `[Artichoke](/members/Artichoke/)`。
+
+## 使用图片
+
+个人介绍中使用的图片建议放在 `members/assets/<作者 ID>/` 下，每位成员单独维护自己的图片目录。例如：
+
+```text
+members/
+├── Artichoke.md
+└── assets/
+    └── Artichoke/
+        ├── render.png
+        └── project.jpg
+```
+
+在 `members/Artichoke.md` 或 `members/Artichoke.mdx` 中使用相对路径引用：
 
 ```md
 ![渲染结果](./assets/Artichoke/render.png)
 ```
 
-也可以链接到其他成员的个人页，例如 `[Artichoke](/members/Artichoke/)`。
+目录中的作者 ID 大小写应与 `blog/authors.yml` 一致。图片文件名建议使用英文、数字和短横线，例如 `path-tracing-result.png`。
+
+相对路径可以适配本站的 `/TDS-Graphics-Website/` 部署路径，无需手动添加网站前缀。
+
+全站共用的图片，例如 logo、首页背景，继续放在 `static/img/` 下。
 
 ## 默认页面
 
