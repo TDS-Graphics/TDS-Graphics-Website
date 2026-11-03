@@ -7,6 +7,7 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build",
+    "test": "node --test plugins/members/content.test.js plugins/members/index.test.js",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -17,7 +18,9 @@
   "dependencies": {
     "@docusaurus/core": "3.10.1",
     "@docusaurus/faster": "3.10.1",
+    "@docusaurus/mdx-loader": "3.10.1",
     "@docusaurus/preset-classic": "3.10.1",
+    "@docusaurus/utils": "3.10.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
     "katex": "^0.16.47",
@@ -25,7 +28,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rehype-katex": "^7.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.1",

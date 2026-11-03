@@ -1,0 +1,190 @@
+.listPage {
+  max-width: 1080px;
+  padding-top: 4rem;
+  padding-bottom: 5rem;
+}
+
+.listTitle {
+  margin: 0 0 3rem;
+  text-align: center;
+  font-size: 2.25rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.75rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.memberLink {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.memberLink:hover {
+  text-decoration: none;
+}
+
+.memberLink:focus-visible,
+.backLink:focus-visible,
+.links a:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 5px;
+}
+
+.avatar {
+  display: block;
+  width: 144px;
+  height: 144px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.initials {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--ifm-color-primary);
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
+.memberName {
+  max-width: 100%;
+  margin: 1.15rem 0 0;
+  color: var(--ifm-font-color-base);
+  font-size: 1.2rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.memberLink:hover .memberName {
+  color: var(--ifm-color-primary);
+}
+
+.memberTitle,
+.profileTitle {
+  margin: 0.4rem 0 0;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.95rem;
+}
+
+.profilePage {
+  max-width: 880px;
+  padding-top: 2.5rem;
+  padding-bottom: 5rem;
+}
+
+.backLink {
+  display: inline-block;
+  font-size: 0.95rem;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.profileInfo {
+  min-width: 0;
+}
+
+.profileName {
+  margin: 0;
+  font-size: 2.25rem;
+  overflow-wrap: anywhere;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.95rem;
+}
+
+.bio {
+  margin-top: 2.5rem;
+  overflow-wrap: anywhere;
+}
+
+.bio > :last-child {
+  margin-bottom: 0;
+}
+
+.empty {
+  color: var(--ifm-color-emphasis-700);
+}
+
+@media screen and (max-width: 640px) {
+  .listPage {
+    padding-top: 2.5rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .listTitle {
+    margin-bottom: 2rem;
+    font-size: 1.85rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 0.75rem;
+  }
+
+  .avatar {
+    width: 112px;
+    height: 112px;
+  }
+
+  .memberName {
+    font-size: 1.1rem;
+  }
+
+  .profileHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .profileName {
+    font-size: 1.85rem;
+  }
+
+  .bio {
+    margin-top: 2rem;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

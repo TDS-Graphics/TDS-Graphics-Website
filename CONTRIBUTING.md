@@ -96,6 +96,10 @@ TDS-Graphics-Website/
 }
 ```
 
+## 成员介绍
+
+成员列表自动使用 `blog/authors.yml` 中的全部作者。成员可以在 `members/<作者 ID>.md` 或 `.mdx` 中维护自己的个人介绍；不填写时使用默认个人页。详细说明和示例见 [成员介绍维护指南](./members/README.md)。
+
 ## 许可证
 
 仓库中的源代码采用 [MIT License](./LICENSE) 发布。除另有说明外，文档、教程、博客文章和原创内容采用 [CC BY-NC-ND 4.0 International](./LICENSE-CONTENT.md) 许可。

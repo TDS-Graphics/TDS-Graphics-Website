@@ -117,6 +117,13 @@ const config = {
   ],
 
   plugins: [
+    [
+      './plugins/members',
+      {
+        remarkPlugins: mathRemarkPlugins,
+        rehypePlugins: mathRehypePlugins,
+      },
+    ],
     ...tutorials.map((tutorial) => [
       '@docusaurus/plugin-content-docs',
       {
@@ -164,6 +171,7 @@ const config = {
             label: '教程',
           },
           {to: '/blog', label: '博客', position: 'right'},
+          {to: '/members/', label: '成员', position: 'right'},
           {
             href: 'https://github.com/TDS-Graphics',
             label: 'GitHub',
