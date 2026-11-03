@@ -18,6 +18,8 @@
   --ifm-heading-font-weight: 720;
   --ifm-font-family-base: Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --ifm-code-font-size: 95%;
+  --ifm-navbar-shadow: 0 2px 5px rgba(15, 23, 42, 0.14),
+    0 8px 20px -6px rgba(15, 23, 42, 0.2);
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
@@ -30,9 +32,11 @@
   --ifm-color-primary-light: #89dad6;
   --ifm-color-primary-lighter: #96deda;
   --ifm-color-primary-lightest: #bcebea;
+  --ifm-navbar-shadow: 0 2px 5px rgba(0, 0, 0, 0.4),
+    0 8px 20px -6px rgba(0, 0, 0, 0.6);
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
 .navbar {
-  box-shadow: 0 1px 0 var(--ifm-color-emphasis-200);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
