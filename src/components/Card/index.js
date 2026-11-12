@@ -9,8 +9,6 @@ export default function Card({
   to,
   title,
   description,
-  tags = [],
-  cta = '进入教程',
   headingLevel,
   accent,
   image,
@@ -33,19 +31,6 @@ export default function Card({
             <Heading as={headingTag}>{title}</Heading>
             {description && <p className={styles.featureDesc}>{description}</p>}
           </div>
-
-          <div className={styles.featureBottom}>
-            {tags.length > 0 && (
-              <ul className={styles.tagList}>
-                {tags.map((tag) => (
-                  <li key={tag}>{tag}</li>
-                ))}
-              </ul>
-            )}
-            <span className={styles.featureCta}>
-              {cta} <span className={styles.arrow} aria-hidden="true">↗</span>
-            </span>
-          </div>
         </div>
 
         {image && (
@@ -63,16 +48,6 @@ export default function Card({
         {title}
       </Heading>
       {description && <p className={styles.cardDesc}>{description}</p>}
-      {tags.length > 0 && (
-        <ul className={styles.tagList}>
-          {tags.map((tag) => (
-            <li key={tag}>{tag}</li>
-          ))}
-        </ul>
-      )}
-      <span className={styles.cardCta}>
-        {cta} <span className={styles.arrow} aria-hidden="true">↗</span>
-      </span>
     </Link>
   );
 }

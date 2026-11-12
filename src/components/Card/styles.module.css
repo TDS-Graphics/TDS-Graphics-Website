@@ -57,7 +57,7 @@
 
 .featureContent {
   display: flex;
-  width: 53%;
+  width: 50%;
   min-width: 0;
   flex-direction: column;
   padding: 1.75rem 2rem 1.65rem;
@@ -111,7 +111,7 @@
 }
 
 .feature:hover .featureVisual img {
-  transform: scale(1.035);
+  transform: scale(1.0);
   filter: saturate(1.08) contrast(1.03);
 }
 
@@ -145,43 +145,11 @@
   padding-top: 1.65rem;
 }
 
-.tagList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.feature .tagList li {
-  padding: 0.2rem 0.45rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
-  border-radius: 2px;
-  color: var(--accent-ink);
-  font-size: 0.66rem;
-  line-height: 1.35;
-}
 
-.featureCta {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--accent-ink);
-  font-size: 0.74rem;
-  font-weight: 800;
-}
-
-.arrow {
-  font-size: 1rem;
-  line-height: 0;
-  transition: transform 180ms ease;
-}
-
-.feature:hover .arrow,
-.card:hover .arrow {
-  transform: translate(3px, -3px);
+.feature:hover ,
+.card:hover {
+  transform: translate(1px, -1px);
 }
 
 .cyan {
@@ -263,16 +231,6 @@
   line-height: 1.35;
 }
 
-.cardCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: auto;
-  padding-top: 1.5rem;
-  color: #7fded9;
-  font-size: 0.74rem;
-  font-weight: 800;
-}
 
 :global([data-theme='dark']) .feature {
   border-color: rgba(160, 202, 198, 0.16);

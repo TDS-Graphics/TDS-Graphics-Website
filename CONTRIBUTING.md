@@ -75,7 +75,7 @@ yarn build
 TDS-Graphics-Website/
 ├── blog/                  # 博客文章
 ├── docs/                  # 文档内容
-├── src/                   # 自定义样式
+├── src/                   # 自定义页面、组件、样式与数据（项目数据见 src/data/projects.json）
 ├── static/                # 静态资源（图片等）
 ├── tutorials/             # 教程目录（每个含 docs/ 的子目录自动注册为一个独立教程）
 │    └── unified-roadmap-course/  # 统一学习路线
@@ -95,6 +95,21 @@ TDS-Graphics-Website/
   "tags": ["标签一", "标签二"]
 }
 ```
+
+## 项目展示
+
+项目总览页位于 `/projects/`，由 `src/data/projects.json` 驱动。数组顺序就是页面上的展示顺序。每个条目支持以下字段：
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `title` | 是 | 项目名称 |
+| `url` | 是 | 项目地址，点击卡片会在新标签页打开 |
+| `description` | 否 | 一句话简介 |
+| `image` | 否 | 封面图路径，例如 `/img/projects/my-project.png` |
+
+封面图建议放在 `static/img/projects/` 下，使用英文、数字和短横线命名，推荐 16:9 比例。图片路径直接写 `/img/projects/...`，构建时会自动适配网站的部署前缀。未填写 `image` 时，卡片会显示项目名首字作为占位。
+
+新增或修改项目后运行 `npm start` 预览，提交前运行 `npm run build` 验证站点。
 
 ## 成员介绍
 

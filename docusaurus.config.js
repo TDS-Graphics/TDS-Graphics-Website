@@ -170,6 +170,11 @@ const config = {
             position: 'left',
             label: '教程',
           },
+          {
+            to: '/projects/',
+            position: 'left',
+            label: '项目',
+          },
           {to: '/blog', label: '博客', position: 'right'},
           {to: '/members/', label: '成员', position: 'right'},
           {
@@ -211,6 +216,10 @@ const config = {
           {
             title: '更多',
             items: [
+              {
+                label: '项目',
+                to: '/projects/',
+              },
               {
                 label: '博客',
                 to: '/blog',
