@@ -218,4 +218,47 @@ $$
 \end{aligned}
 $$
 
-内层积分就这么被解析地算出来了。令内层积分等于 
+内层积分就这么被解析地算出来了。所以接下来就是解析内层积分，外层积分用数值解，就能得出最后的结果。
+
+这个方法的好处可以比较精确的知道 directional 的信息，而原版 SSAO 的均匀撒点只能得到平均值。GTAO 和 SSILVB 都基于这个思想，它们最大的区别实际上是 SSILVB 用位掩码代替了 GTAO 的地平角：
+
+```hlsl
+uint UpdateSectors(float minHorizon, float maxHorizon, uint globalOccludedBitfield)
+{
+    uint startHorizonInt = minHorizon * SECTOR_COUNT;
+    uint angleHorizonInt = ceil((maxHorizon-minHorizon) * SECTOR_COUNT);
+    uint angleHorizonBitfield = angleHorizonInt > 0 ? (0xFFFFFFFF >> (SECTOR_COUNT-angleHorizonInt)) : 0;
+    uint currentOccludedBitfield = angleHorizonBitfield << startHorizonInt;
+    return globalOccludedBitfield | currentOccludedBitfield;
+}
+```
+
+进一步地，对栅栏、椅子等薄物体而言，厚度（thickness）的概念十分重要，因为传统 AO 假设它们无限厚，这会导致发黑的问题。在 SSILVB 里，我们可以很自然地解决这个问题：
+通过引入物体 **正面和背面的两个地平角** ，将原本无限延伸的遮挡区域限制在一个有限的角度区间内。
+
+具体而言，我们首先从深度缓冲获取采样点的正面位置，并根据预设的厚度值 **沿视线方向** 推算其背面位置。随后，分别计算观察点到正面和背面的两个地平角。将这两个角度映射到 visibility bitmask 对应的 Sector，就可以只将物体实际占据的角度区间标记为遮挡，并保留其余方向的可见性。
+
+这样一来，栅栏栏杆之间的空隙、椅子腿之间的空间便不会被错误地视为遮挡区域。
+
+```hlsl
+float3 deltaPos = samplePosVS - positionVS;
+
+float2 frontBackHorizon;
+float3 deltaPosBackface = deltaPos - V * _Thickness;
+
+// 计算两个地平角
+frontBackHorizon = float2(dot(normalize(deltaPos), V), dot(normalize(deltaPosBackface), V));
+frontBackHorizon = arccos(frontBackHorizon);
+
+// 把地平角从相对于 view direction 的转向相对于 normal 的
+frontBackHorizon = saturate(((samplingDirection * -frontBackHorizon) - N + HALF_PI) / PI);
+
+// 根据采样方向修正地平角大小顺序
+frontBackHorizon = samplingDirection >= 0 ? frontBackHorizon.yx : frontBackHorizon.xy;
+
+globalOccludedBitfield = UpdateSectors(frontBackHorizon.x, frontBackHorizon.y, globalOccludedBitfield);
+```
+
+这种更精确的方向性可见度对 GI 的计算也大有好处，由于我们可以更准确地知道哪些方向有间接光照贡献。
+
+以上。其实省略了很多，本文主要讲 visibility bitmask 的核心部分。最后效果见 [SSILVB 实时全局光照](https://www.bilibili.com/video/BV14xp16aEGL/)
